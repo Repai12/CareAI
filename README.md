@@ -20,9 +20,9 @@ The platform supports three roles:
  
 ## Tech Stack
  
-- **Backend:** Python 3.11 · FastAPI (async REST API)
-- **Frontend:** Next.js 14 (App Router) · React 18 · TypeScript · Tailwind CSS
-- **Database:** PostgreSQL · SQLAlchemy 2 · Alembic migrations
+- **Backend:** FastAPI 
+- **Frontend:** Next.js
+- **Database:** PostgreSQL
 - **AI:** Groq API (Llama 3.3 70B) — used for summaries, reflections, AI companion chat, and Q&A
 - **Notifications:** Twilio (SMS-based SOS alerts)
 - **Real-time:** WebSockets (family/doctor chat)
