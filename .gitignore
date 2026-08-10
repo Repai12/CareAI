@@ -1,0 +1,101 @@
+# ============================================================
+# PYTHON
+# ============================================================
+
+# Virtual environments
+venv/
+.venv/
+backend/venv/
+backend/.venv/
+
+# Python cache
+__pycache__/
+**/__pycache__/
+
+# Python compiled files
+*.py[cod]
+*$py.class
+
+
+# ============================================================
+# ENVIRONMENT VARIABLES / SECRETS
+# ============================================================
+
+# All environment files
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Allow example environment files
+!.env.example
+!**/.env.example
+
+
+# ============================================================
+# GOOGLE OAUTH / API CREDENTIALS
+# ============================================================
+
+credentials.json
+token.json
+client_secret*.json
+google_credentials.json
+
+# Private key / certificate files
+*.pem
+*.key
+*.p12
+*.pfx
+
+
+# ============================================================
+# NEXT.JS / FRONTEND
+# ============================================================
+
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Next.js build output
+.next/
+frontend/.next/
+
+# Next.js static output
+out/
+frontend/out/
+
+
+# ============================================================
+# IDE / EDITOR
+# ============================================================
+
+.vscode/
+.vscode/*
+.idea/
+
+# VS Code workspace files
+*.code-workspace
+
+
+# ============================================================
+# LOGS
+# ============================================================
+
+*.log
+logs/
+
+
+# ============================================================
+# OPERATING SYSTEM FILES
+# ============================================================
+
+.DS_Store
+Thumbs.db
+
+
+# ============================================================
+# TEMPORARY FILES
+# ============================================================
+
+*.tmp
+*.temp
