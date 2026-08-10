@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import Base, engine
-from app.routers import dashboard, reports, auth_stub
+from app.routers import dashboard, reports, auth_stub, me
 from app.services.scheduler import start_scheduler
 
 # Creates tables that don't exist yet (fine for dev; use Alembic for prod)
@@ -28,6 +28,7 @@ app.add_middleware(
 app.include_router(auth_stub.router)
 app.include_router(dashboard.router)
 app.include_router(reports.router)
+app.include_router(me.router)
 
 
 @app.on_event("startup")
