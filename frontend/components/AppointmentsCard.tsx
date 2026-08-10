@@ -1,9 +1,15 @@
 import SectionCard from "./SectionCard";
+import { CalendarIcon } from "./icons";
 import { AppointmentOut } from "@/lib/api";
 
 export default function AppointmentsCard({ appointments }: { appointments: AppointmentOut[] }) {
   return (
-    <SectionCard eyebrow={`${appointments.length} upcoming`} title="Appointments">
+    <SectionCard
+      eyebrow={`${appointments.length} upcoming`}
+      title="Appointments"
+      icon={<CalendarIcon />}
+      accent="gold"
+    >
       {appointments.length === 0 ? (
         <p className="text-ink/50 text-sm">No upcoming appointments.</p>
       ) : (
