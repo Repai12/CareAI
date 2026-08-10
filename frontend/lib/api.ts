@@ -89,6 +89,10 @@ export function getReportHistory(patientId: string) {
   return apiFetch(`/reports/weekly/${patientId}`) as Promise<WeeklyReportOut[]>;
 }
 
+export function getMyPatients() {
+  return apiFetch(`/me/patients`) as Promise<{ id: string; name: string; email: string; role: string }[]>;
+}
+
 export function login(email: string, password: string) {
   return apiFetch(`/auth/login`, {
     method: "POST",
