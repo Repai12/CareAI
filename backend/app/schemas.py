@@ -84,3 +84,55 @@ class WeeklyReportOut(BaseModel):
 
 class TriggerReportRequest(BaseModel):
     patient_id: uuid.UUID
+
+
+class EmergencyContactCreate(BaseModel):
+    name: str
+    phone_number: str
+    relationship_label: str
+    priority: int
+
+
+class EmergencyContactUpdate(BaseModel):
+    name: str
+    phone_number: str
+    relationship_label: str
+    priority: int
+
+
+class EmergencyContactOut(BaseModel):
+    id: uuid.UUID
+    patient_id: uuid.UUID
+    name: str
+    phone_number: str
+    relationship_label: str
+    priority: int
+
+    class Config:
+        from_attributes = True
+
+
+class EmergencyContactCreate(BaseModel):
+    name: str
+    phone: str
+    relationship: str
+    priority: int
+
+
+class EmergencyContactUpdate(BaseModel):
+    name: str
+    phone: str
+    relationship: str
+    priority: int
+
+
+class EmergencyContactOut(BaseModel):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    name: str
+    phone: str
+    relationship: str
+    priority: int
+
+    class Config:
+        from_attributes = True        

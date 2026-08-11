@@ -44,7 +44,11 @@ class User(Base):
     vitals = relationship("Vitals", back_populates="patient", cascade="all, delete-orphan")
     medications = relationship("Medication", back_populates="patient", cascade="all, delete-orphan")
     appointments = relationship("Appointment", back_populates="patient", cascade="all, delete-orphan")
-
+    emergency_contacts = relationship(
+    "EmergencyContact",
+    back_populates="patient",
+    cascade="all, delete-orphan"
+)
 
 class PatientLink(Base):
     """
@@ -120,3 +124,15 @@ class WeeklyReportLog(Base):
     summary_text = Column(Text, nullable=False)
     status = Column(String, default="sent")  # "sent" or "failed"
     sent_at = Column(DateTime, default=datetime.utcnow)
+
+class EmergencyContact(Base):
+    __tablename__ = "emergency_contacts"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    patient_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    name = Column(String, nullable=False)
+    phone_number = Column(String, nullable=False)
+    relationship_label = Column(String, nullable=False)
+    priority = Column(Float, nullable=False)
+
+    patient = relationship("User", back_populates="emergency_contacts")
