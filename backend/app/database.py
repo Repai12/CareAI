@@ -1,9 +1,9 @@
 """
 database.py
 ------------
-Sets up the SQLAlchemy engine + session for talking to PostgreSQL.
-Every router will import `get_db` as a dependency to get a DB session
-per-request (and it auto-closes when the request finishes).
+SHARED FILE - do not restructure without telling the team.
+Sets up the SQLAlchemy engine + session. Every router imports `get_db`
+as a dependency to get a DB session per-request.
 """
 
 from sqlalchemy import create_engine

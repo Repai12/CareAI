@@ -1,0 +1,15 @@
+"""
+models/__init__.py
+--------------------
+Imports every model file so SQLAlchemy's Base.metadata knows about all
+tables when main.py calls Base.metadata.create_all(). When you add a new
+model file, add its import here too.
+"""
+
+from app.models.user import User, UserRole, PatientLink
+from app.models.vitals import VitalsLog
+from app.models.medication import Medication, Appointment, AppointmentStatus
+from app.models.email_log import EmailLog
+# Placeholders - uncomment once each member builds their models:
+# from app.models.emergency import EmergencyContact, DailyCheckin
+# from app.models.notification import Notification
