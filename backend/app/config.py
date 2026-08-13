@@ -1,25 +1,23 @@
 """
 config.py
 ---------
-Central place to read environment variables (DB URL, JWT secret, SendGrid key).
-We NEVER hardcode secrets in code - they live in a .env file (which is git-ignored)
-and are loaded here using pydantic-settings.
+SHARED FILE - do not restructure without telling the team.
+Central place to read environment variables. Every teammate's DATABASE_URL
+should point to the SAME shared Neon Postgres instance (see README) so
+everyone works against live, shared data instead of isolated local copies.
 """
 
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    # PostgreSQL connection string, e.g.
-    # postgresql://careai_user:careai_pass@localhost:5432/careai_db
     DATABASE_URL: str
 
-    # Used to sign JWT auth tokens
     JWT_SECRET: str = "dev-secret-change-me"
     JWT_ALGORITHM: str = "HS256"
-    JWT_EXPIRE_MINUTES: int = 60 * 24  # 1 day
+    JWT_EXPIRE_MINUTES: int = 60 * 24
 
-   # Resend (Module 2 - Feature 4)
+    # Member 4 (Repai) - email provider for weekly reports
     RESEND_API_KEY: str = ""
     RESEND_FROM_EMAIL: str = "onboarding@resend.dev"
 

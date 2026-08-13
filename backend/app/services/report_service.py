@@ -1,29 +1,24 @@
 """
-report_service.py
-------------------
-MODULE 2 - FEATURE 4 (Member-4 / Repai Ul Islam)
-"[SendGrid API] Automated Weekly Email Health Report — SendGrid emails a
-formatted weekly health summary to the patient's family and doctor."
-
-generate_weekly_report():
-  - Pulls the last 7 days of vitals, active medications, and appointments
-    for a patient straight from Postgres (real data, no hardcoding).
-  - Builds an HTML summary.
-  - Sends it via SendGrid to every family/doctor linked to that patient.
-  - Logs each send attempt to WeeklyReportLog (audit trail = real CRUD).
+services/report_service.py
+-----------------------------
+OWNED BY MEMBER 4 (Repai) - Module 2, Feature 4 core logic. Pulls 7 days
+of real data, builds the HTML email, sends via Resend, logs every attempt.
 """
 
 from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
 
-from app.models import User, UserRole, Vitals, Medication, Appointment, PatientLink, WeeklyReportLog
+from app.models.user import User, UserRole, PatientLink
+from app.models.vitals import VitalsLog
+from app.models.medication import Medication, Appointment
+from app.models.email_log import EmailLog
 from app.services.email_service import send_email
 
 
-def _build_summary_html(patient: User, vitals: list[Vitals], meds: list[Medication], appts: list[Appointment]) -> str:
+def _build_summary_html(patient: User, vitals: list[VitalsLog], meds: list[Medication], appts: list[Appointment]) -> str:
     vitals_rows = "".join(
-        f"<tr><td>{v.recorded_at.strftime('%d %b, %H:%M')}</td>"
+        f"<tr><td>{v.logged_at.strftime('%d %b, %H:%M')}</td>"
         f"<td>{v.blood_pressure}</td><td>{v.sugar_level}</td>"
         f"<td>{v.heart_rate}</td><td>{v.temperature}</td></tr>"
         for v in vitals
@@ -52,17 +47,17 @@ def _build_summary_html(patient: User, vitals: list[Vitals], meds: list[Medicati
     """
 
 
-def generate_weekly_report(db: Session, patient_id) -> list[WeeklyReportLog]:
-    patient = db.query(User).filter(User.id == patient_id, User.role == UserRole.patient).first()
+def generate_weekly_report(db: Session, patient_id) -> list[EmailLog]:
+    patient = db.query(User).filter(User.id == patient_id, User.role == UserRole.patient.value).first()
     if not patient:
         raise ValueError("Patient not found")
 
     week_ago = datetime.utcnow() - timedelta(days=7)
 
     vitals = (
-        db.query(Vitals)
-        .filter(Vitals.patient_id == patient_id, Vitals.recorded_at >= week_ago)
-        .order_by(Vitals.recorded_at)
+        db.query(VitalsLog)
+        .filter(VitalsLog.patient_id == patient_id, VitalsLog.logged_at >= week_ago)
+        .order_by(VitalsLog.logged_at)
         .all()
     )
     meds = (
@@ -87,16 +82,21 @@ def generate_weekly_report(db: Session, patient_id) -> list[WeeklyReportLog]:
 
     logs = []
     for recipient in recipients:
+        # Unlinked/missing email guard - skip cleanly instead of crashing the loop
+        if not recipient.email:
+            continue
+
         success = send_email(
             to_email=recipient.email,
             subject=f"CareAI Weekly Health Report - {patient.name}",
             html_content=html,
         )
-        log = WeeklyReportLog(
+        log = EmailLog(
             patient_id=patient_id,
-            sent_to=recipient.email,
+            recipient_email=recipient.email,
+            report_type="WEEKLY_REPORT",
             summary_text=html,
-            status="sent" if success else "failed",
+            status="SENT" if success else "FAILED",
         )
         db.add(log)
         logs.append(log)

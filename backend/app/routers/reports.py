@@ -1,12 +1,8 @@
 """
-reports.py
-----------
-Exposes the weekly report feature over HTTP:
-  POST /reports/weekly/trigger   - manually generate + send now (for demo/testing)
-  GET  /reports/weekly/{patient_id} - view past report logs (real CRUD read)
-
-The actual automatic "every week" scheduling is handled by
-app/services/scheduler.py (APScheduler), started from main.py.
+routers/reports.py
+--------------------
+OWNED BY MEMBER 4 (Repai) - Module 2, Feature 4: Automated Weekly Email
+Health Report.
 """
 
 import uuid
@@ -16,21 +12,20 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.auth import get_current_user
-from app.models import User, UserRole, WeeklyReportLog
-from app.schemas import WeeklyReportOut, TriggerReportRequest
+from app.models.user import User, UserRole
+from app.schemas import EmailLogOut, TriggerReportRequest
 from app.services.report_service import generate_weekly_report
 
 router = APIRouter(prefix="/reports", tags=["weekly reports"])
 
 
-@router.post("/weekly/trigger", response_model=list[WeeklyReportOut])
+@router.post("/weekly/trigger", response_model=list[EmailLogOut])
 def trigger_weekly_report(
     payload: TriggerReportRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    # Only the patient themselves or a doctor can manually trigger it
-    if current_user.role not in (UserRole.patient, UserRole.doctor):
+    if current_user.role not in (UserRole.patient.value, UserRole.doctor.value):
         raise HTTPException(403, "Not allowed to trigger reports")
 
     try:
@@ -44,15 +39,16 @@ def trigger_weekly_report(
     return logs
 
 
-@router.get("/weekly/{patient_id}", response_model=list[WeeklyReportOut])
+@router.get("/weekly/{patient_id}", response_model=list[EmailLogOut])
 def get_report_history(
     patient_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    from app.models.email_log import EmailLog
     return (
-        db.query(WeeklyReportLog)
-        .filter(WeeklyReportLog.patient_id == patient_id)
-        .order_by(WeeklyReportLog.sent_at.desc())
+        db.query(EmailLog)
+        .filter(EmailLog.patient_id == patient_id, EmailLog.report_type == "WEEKLY_REPORT")
+        .order_by(EmailLog.sent_at.desc())
         .all()
     )
