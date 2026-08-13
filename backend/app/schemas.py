@@ -1,10 +1,9 @@
 """
 schemas.py
 ----------
-Pydantic models define the shape of JSON going in/out of the API.
-Separate from `models.py` (which is the DB shape) - this is standard
-FastAPI practice and something you should be able to explain live:
-"models.py = database table, schemas.py = API contract".
+API request/response shapes (Pydantic). Add your own schemas here as you
+build features, or split into schemas/ if this file gets large - talk to
+the team before restructuring since everyone imports from here.
 """
 
 import uuid
@@ -19,6 +18,7 @@ class UserBase(BaseModel):
     name: str
     email: EmailStr
     role: str
+    patient_code: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -30,7 +30,7 @@ class VitalsOut(BaseModel):
     sugar_level: float
     heart_rate: float
     temperature: float
-    recorded_at: datetime
+    logged_at: datetime
 
     class Config:
         from_attributes = True
@@ -60,21 +60,17 @@ class AppointmentOut(BaseModel):
 
 
 class DashboardResponse(BaseModel):
-    """
-    This is the exact shape of Module 1 / Feature 4:
-    'real-time summary of latest vitals, medicines, and upcoming appointments'
-    """
     patient: UserBase
     latest_vitals: Optional[VitalsOut]
     active_medications: List[MedicationOut]
     upcoming_appointments: List[AppointmentOut]
 
 
-class WeeklyReportOut(BaseModel):
+class EmailLogOut(BaseModel):
     id: uuid.UUID
     patient_id: uuid.UUID
-    sent_to: str
-    summary_text: str
+    recipient_email: str
+    report_type: str
     status: str
     sent_at: datetime
 
@@ -84,55 +80,3 @@ class WeeklyReportOut(BaseModel):
 
 class TriggerReportRequest(BaseModel):
     patient_id: uuid.UUID
-
-
-class EmergencyContactCreate(BaseModel):
-    name: str
-    phone_number: str
-    relationship_label: str
-    priority: int
-
-
-class EmergencyContactUpdate(BaseModel):
-    name: str
-    phone_number: str
-    relationship_label: str
-    priority: int
-
-
-class EmergencyContactOut(BaseModel):
-    id: uuid.UUID
-    patient_id: uuid.UUID
-    name: str
-    phone_number: str
-    relationship_label: str
-    priority: int
-
-    class Config:
-        from_attributes = True
-
-
-class EmergencyContactCreate(BaseModel):
-    name: str
-    phone: str
-    relationship: str
-    priority: int
-
-
-class EmergencyContactUpdate(BaseModel):
-    name: str
-    phone: str
-    relationship: str
-    priority: int
-
-
-class EmergencyContactOut(BaseModel):
-    id: uuid.UUID
-    user_id: uuid.UUID
-    name: str
-    phone: str
-    relationship: str
-    priority: int
-
-    class Config:
-        from_attributes = True        
