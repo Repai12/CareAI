@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import SectionCard from "./SectionCard";
+import { MailIcon } from "./icons";
 import { WeeklyReportOut, triggerWeeklyReport } from "@/lib/api";
 
 export default function ReportPanel({
@@ -29,7 +30,7 @@ export default function ReportPanel({
   }
 
   return (
-    <SectionCard eyebrow="SendGrid" title="Weekly Email Health Report">
+    <SectionCard eyebrow="Resend" title="Weekly Email Health Report" icon={<MailIcon />} accent="sage">
       <button
         onClick={handleSendNow}
         disabled={loading}
