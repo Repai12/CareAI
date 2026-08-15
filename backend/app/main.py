@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import Base, engine
 import app.models  # noqa: F401 - imports every model so create_all sees them
 
-from app.routers import auth, dashboard, reports, me
+from app.routers import auth, dashboard, reports, me, ai_summary, notifications
 # Uncomment as each member's router gets real endpoints:
 from app.routers import vitals as vitals_router
 from app.routers import medications as medications_router
@@ -40,6 +40,8 @@ app.include_router(auth.router)
 app.include_router(dashboard.router)
 app.include_router(reports.router)
 app.include_router(me.router)
+app.include_router(ai_summary.router)
+app.include_router(notifications.router)
 
 # --- Teammate routers (placeholders, safe to include even with no routes yet) ---
 app.include_router(vitals_router.router)
