@@ -1,9 +1,15 @@
 import SectionCard from "./SectionCard";
+import { PillIcon } from "./icons";
 import { MedicationOut } from "@/lib/api";
 
 export default function MedicationsCard({ medications }: { medications: MedicationOut[] }) {
   return (
-    <SectionCard eyebrow={`${medications.length} active`} title="Medications">
+    <SectionCard
+      eyebrow={`${medications.length} active`}
+      title="Medications"
+      icon={<PillIcon />}
+      accent="sage"
+    >
       {medications.length === 0 ? (
         <p className="text-ink/50 text-sm">No active medications.</p>
       ) : (
