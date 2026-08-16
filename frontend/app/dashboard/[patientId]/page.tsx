@@ -81,6 +81,13 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          {/* Member 1 (Mubasshira) - one-line link into the Health Module */}
+          <Link
+            href={`/health/${patientId}`}
+            className="text-xs font-medium text-sage border border-sageLight rounded-full px-3 py-1.5 hover:bg-sageLight transition"
+          >
+            Health Module
+          </Link>
           <Link
             href={`/notifications/${patientId}`}
             className="text-xs font-medium text-sage border border-sageLight rounded-full px-3 py-1.5 hover:bg-sageLight transition"
