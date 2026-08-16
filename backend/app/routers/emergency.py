@@ -1,26 +1,27 @@
-import uuid
+﻿import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.auth import get_current_user
-from app.models import User, EmergencyContact, FallIncident
+from app.models import User, EmergencyContact, FallIncident, SafetyCheckin
 from app.services.twilio_service import send_sms
+from app.services.safety_checkin_service import start_safety_checkin_scheduler
 from app.schemas import (
     EmergencyContactCreate,
     EmergencyContactUpdate,
     EmergencyContactOut,
     FallIncidentCreate,
     FallIncidentOut,
+    SafetyCheckinOut,
 )
-from app.services.twilio_service import send_sms
 
 router = APIRouter(
     prefix="/emergency",
     tags=["Emergency Contacts"]
 )
-
+start_safety_checkin_scheduler()
 
 @router.post(
     "/contacts",
@@ -128,6 +129,26 @@ def log_fall_incident(
     return incident
 
 
+@router.post(
+    "/checkin",
+    response_model=SafetyCheckinOut,
+    status_code=201
+)
+def daily_safety_checkin(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    checkin = SafetyCheckin(
+        user_id=current_user.id
+    )
+
+    db.add(checkin)
+    db.commit()
+    db.refresh(checkin)
+
+    return checkin
+
+
 @router.post("/sos")
 def trigger_sos(
     db: Session = Depends(get_db),
@@ -139,18 +160,22 @@ def trigger_sos(
         .order_by(EmergencyContact.priority.asc())
         .all()
     )
+
     if not contacts:
         raise HTTPException(
             status_code=404,
             detail="No emergency contacts registered"
         )
+
     message = (
         f"EMERGENCY ALERT from CareAI! "
         f"{current_user.name} has triggered an SOS alert. "
         f"Please contact them immediately."
     )
+
     sent = []
     failed = []
+
     for contact in contacts:
         try:
             result = send_sms(contact.phone, message)
@@ -165,6 +190,7 @@ def trigger_sos(
                 "phone": contact.phone,
                 "error": str(e)
             })
+
     if not sent:
         raise HTTPException(
             status_code=500,
@@ -173,6 +199,7 @@ def trigger_sos(
                 "failed": failed
             }
         )
+
     return {
         "message": "SOS alert processed",
         "total_contacts": len(contacts),
