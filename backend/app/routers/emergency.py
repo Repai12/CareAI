@@ -5,11 +5,14 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.auth import get_current_user
-from app.models import User, EmergencyContact
+from app.models import User, EmergencyContact, FallIncident
+from app.services.twilio_service import send_sms
 from app.schemas import (
     EmergencyContactCreate,
     EmergencyContactUpdate,
     EmergencyContactOut,
+    FallIncidentCreate,
+    FallIncidentOut,
 )
 
 router = APIRouter(
@@ -151,3 +154,46 @@ def delete_emergency_contact(
     return {
         "message": "Emergency contact deleted successfully"
     }
+
+
+@router.post(
+    "/falls",
+    response_model=FallIncidentOut,
+    status_code=201
+)
+def log_fall_incident(
+    payload: FallIncidentCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    contacts = (
+        db.query(EmergencyContact)
+        .filter(EmergencyContact.user_id == current_user.id)
+        .order_by(EmergencyContact.priority.asc())
+        .all()
+    )
+
+    incident = FallIncident(
+        user_id=current_user.id,
+        severity=payload.severity,
+        details=payload.details,
+    )
+
+    db.add(incident)
+    db.commit()
+    db.refresh(incident)
+
+    message = (
+        f"CAREAI FALL ALERT! "
+        f"{current_user.name} has reported a fall. "
+        f"Severity: {payload.severity}. "
+        f"Details: {payload.details or 'No additional details.'}"
+    )
+
+    for contact in contacts:
+        try:
+            send_sms(contact.phone, message)
+        except Exception:
+            pass
+
+    return incident
