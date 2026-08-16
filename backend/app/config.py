@@ -1,34 +1,30 @@
-"""
-config.py
----------
-SHARED FILE - do not restructure without telling the team.
-Central place to read environment variables. Every teammate's DATABASE_URL
-should point to the SAME shared Neon Postgres instance (see README) so
-everyone works against live, shared data instead of isolated local copies.
-"""
-
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    DATABASE_URL: str
+    DATABASE_URL: str 
 
     JWT_SECRET: str = "dev-secret-change-me"
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_MINUTES: int = 60 * 24
 
-    # Member 4 (Repai) - email provider for weekly reports + AI summary
     RESEND_API_KEY: str = ""
     RESEND_FROM_EMAIL: str = "onboarding@resend.dev"
 
-    # Member 4 (Repai) - Gemini API for Doctor AI Patient Summary (Module 3/7)
+    TWILIO_ACCOUNT_SID: str = ""
+    TWILIO_AUTH_TOKEN: str = ""
+    TWILIO_PHONE_NUMBER: str = ""
+
     GEMINI_API_KEY: str = ""
 
-    # Member 1 (Mubasshira) - Groq API for Report Analyzer / Symptom Checker / Diet Advisor
+
+# Member 1 (Mubasshira) - Groq API for Report Analyzer / Symptom Checker / Diet Advisor
     GROQ_API_KEY: str = ""
 
-    class Config:
-        env_file = ".env"
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        extra="ignore"
+    )
 
 
 settings = Settings()

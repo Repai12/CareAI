@@ -83,7 +83,6 @@ class TriggerReportRequest(BaseModel):
 
 
 # --- Member 1 (Mubasshira) - Vitals, AI Report Analyzer, Symptom Checker, Diet Advisor ---
-
 class VitalsIn(BaseModel):
     blood_pressure: str
     sugar_level: float
@@ -162,6 +161,49 @@ class DietLogOut(BaseModel):
     followed: bool
     note: Optional[str] = None
     logged_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# --- Member 3 (Faisal) - Emergency Contacts, SOS, Fall Detection ---
+class EmergencyContactCreate(BaseModel):
+    name: str
+    phone: str
+    relationship: str
+    priority: int = 1
+
+
+class EmergencyContactUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    relationship: Optional[str] = None
+    priority: Optional[int] = None
+
+
+class EmergencyContactOut(BaseModel):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    name: str
+    phone: str
+    relationship: str
+    priority: int
+
+    class Config:
+        from_attributes = True
+
+
+class FallIncidentCreate(BaseModel):
+    severity: str
+    details: Optional[str] = None
+
+
+class FallIncidentOut(BaseModel):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    severity: str
+    details: Optional[str]
+    occurred_at: datetime
 
     class Config:
         from_attributes = True
