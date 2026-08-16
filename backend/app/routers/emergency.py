@@ -11,6 +11,7 @@ from app.schemas import (
     EmergencyContactUpdate,
     EmergencyContactOut,
 )
+from app.services.twilio_service import send_sms
 
 router = APIRouter(
     prefix="/emergency",
@@ -150,4 +151,68 @@ def delete_emergency_contact(
 
     return {
         "message": "Emergency contact deleted successfully"
+    }
+
+
+
+@router.post("/sos")
+def trigger_sos(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    contacts = (
+        db.query(EmergencyContact)
+        .filter(EmergencyContact.user_id == current_user.id)
+        .order_by(EmergencyContact.priority.asc())
+        .all()
+    )
+
+    if not contacts:
+        raise HTTPException(
+            status_code=404,
+            detail="No emergency contacts registered"
+        )
+
+    message = (
+        f"EMERGENCY ALERT from CareAI! "
+        f"{current_user.name} has triggered an SOS alert. "
+        f"Please contact them immediately."
+    )
+
+    sent = []
+    failed = []
+
+    for contact in contacts:
+        try:
+            result = send_sms(contact.phone, message)
+
+            sent.append({
+                "contact": contact.name,
+                "phone": contact.phone,
+                "message_sid": result.sid
+            })
+
+        except Exception as e:
+            failed.append({
+                "contact": contact.name,
+                "phone": contact.phone,
+                "error": str(e)
+            })
+
+    if not sent:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": "SOS triggered but no SMS could be sent",
+                "failed": failed
+            }
+        )
+
+    return {
+        "message": "SOS alert processed",
+        "total_contacts": len(contacts),
+        "messages_sent": len(sent),
+        "messages_failed": len(failed),
+        "sent": sent,
+        "failed": failed
     }
