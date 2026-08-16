@@ -44,6 +44,7 @@ export default function RegisterPage() {
         body: JSON.stringify({ email, password }),
       });
       localStorage.setItem("careai_token", loginRes.access_token);
+      localStorage.setItem("careai_role", loginRes.role);
 
       const patients = await getMyPatients();
       if (patients.length === 0) {
