@@ -107,3 +107,18 @@ class EmergencyContactOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class FallIncidentCreate(BaseModel):
+    severity: str
+    details: Optional[str] = None
+
+
+class FallIncidentOut(BaseModel):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    severity: str
+    details: Optional[str]
+    occurred_at: datetime
+
+    class Config:
+        from_attributes = True
