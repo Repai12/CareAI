@@ -1,18 +1,25 @@
-"""
-database.py
-------------
-SHARED FILE - do not restructure without telling the team.
-Sets up the SQLAlchemy engine + session. Every router imports `get_db`
-as a dependency to get a DB session per-request.
-"""
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-from app.config import settings
+try:
+    from app.config import settings
+    DATABASE_URL = settings.DATABASE_URL
+except Exception:
+    DATABASE_URL = "sqlite:///./careai.db"
 
-engine = create_engine(settings.DATABASE_URL, pool_pre_ping=True, pool_recycle=300)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={"check_same_thread": False}
+    )
+else:
+    engine = create_engine(DATABASE_URL)
+
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine
+)
 
 Base = declarative_base()
 

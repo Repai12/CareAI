@@ -10,6 +10,5 @@ from app.models.user import User, UserRole, PatientLink
 from app.models.vitals import VitalsLog
 from app.models.medication import Medication, Appointment, AppointmentStatus
 from app.models.email_log import EmailLog
-# Placeholders - uncomment once each member builds their models:
-# from app.models.emergency import EmergencyContact, DailyCheckin
+from app.models.emergency import EmergencyContact
 # from app.models.notification import Notification

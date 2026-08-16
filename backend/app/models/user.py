@@ -46,7 +46,11 @@ class User(Base):
     medications = relationship("Medication", back_populates="patient", cascade="all, delete-orphan")
     appointments = relationship("Appointment", back_populates="patient", cascade="all, delete-orphan")
 
-
+    emergency_contacts = relationship(
+    "EmergencyContact",
+    back_populates="user",
+    cascade="all, delete-orphan"
+)
 class PatientLink(Base):
     """
     Connects a family member or doctor account to the patient(s) they can

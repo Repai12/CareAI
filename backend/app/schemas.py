@@ -80,3 +80,30 @@ class EmailLogOut(BaseModel):
 
 class TriggerReportRequest(BaseModel):
     patient_id: uuid.UUID
+
+
+
+class EmergencyContactCreate(BaseModel):
+    name: str
+    phone: str
+    relationship: str
+    priority: int = 1
+
+
+class EmergencyContactUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    relationship: Optional[str] = None
+    priority: Optional[int] = None
+
+
+class EmergencyContactOut(BaseModel):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    name: str
+    phone: str
+    relationship: str
+    priority: int
+
+    class Config:
+        from_attributes = True
