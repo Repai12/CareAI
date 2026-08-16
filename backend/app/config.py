@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+﻿from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -11,16 +11,14 @@ class Settings(BaseSettings):
     RESEND_API_KEY: str = ""
     RESEND_FROM_EMAIL: str = "onboarding@resend.dev"
 
-    TWILIO_ACCOUNT_SID: str = ""
-    TWILIO_AUTH_TOKEN: str = ""
-    TWILIO_PHONE_NUMBER: str = ""
-
+    # Gemini API
     GEMINI_API_KEY: str = ""
 
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        extra="ignore"
-    )
+    # Member 3 - Daily Safety Check-in
+    SAFETY_CHECKIN_TIMEOUT_HOURS: int = 24
+
+    class Config:
+        env_file = None
 
 
 settings = Settings()
