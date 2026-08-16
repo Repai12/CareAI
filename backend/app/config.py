@@ -1,8 +1,8 @@
 ﻿from pydantic_settings import BaseSettings
 
-
+from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
-    DATABASE_URL: str = "sqlite:///./careai.db"
+    DATABASE_URL: str 
 
     JWT_SECRET: str = "dev-secret-change-me"
     JWT_ALGORITHM: str = "HS256"
@@ -17,8 +17,10 @@ class Settings(BaseSettings):
     # Member 3 - Daily Safety Check-in
     SAFETY_CHECKIN_TIMEOUT_HOURS: int = 24
 
-    class Config:
-        env_file = None
+    # Member 1 (Mubasshira) - Groq API for Report Analyzer / Symptom Checker / Diet
+    GROQ_API_KEY: str = ""
 
-
-settings = Settings()
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        extra="ignore"
+    )
