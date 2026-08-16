@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     # Member 4 (Repai) - Gemini API for Doctor AI Patient Summary (Module 3/7)
     GEMINI_API_KEY: str = ""
 
+    # Member 1 (Mubasshira) - Groq API for Report Analyzer / Symptom Checker / Diet Advisor
+    GROQ_API_KEY: str = ""
+
     class Config:
         env_file = ".env"
 
