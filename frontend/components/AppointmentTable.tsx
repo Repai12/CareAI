@@ -6,7 +6,7 @@ interface AppointmentTableProps {
   appointments: Appointment[];
   loading: boolean;
   onEdit: (appointment: Appointment) => void;
-  onDelete: (id: number) => void;
+  onDelete: (id: string) => void;
 }
 
 export default function AppointmentTable({
@@ -15,7 +15,6 @@ export default function AppointmentTable({
   onEdit,
   onDelete,
 }: AppointmentTableProps) {
-
   if (loading) {
     return (
       <div className="bg-white rounded-xl shadow-md p-6">
@@ -32,7 +31,6 @@ export default function AppointmentTable({
 
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
-
       <h2 className="text-2xl font-bold text-gray-800 mb-6">
         Appointments
       </h2>
@@ -49,12 +47,9 @@ export default function AppointmentTable({
         </div>
       ) : (
         <div className="overflow-x-auto">
-
           <table className="w-full border-collapse">
-
             <thead>
               <tr className="bg-gray-100">
-
                 <th className="text-left px-4 py-3 border-b">
                   Patient
                 </th>
@@ -82,19 +77,15 @@ export default function AppointmentTable({
                 <th className="text-center px-4 py-3 border-b">
                   Actions
                 </th>
-
               </tr>
             </thead>
 
             <tbody>
-
               {appointments.map((appointment) => (
-
                 <tr
                   key={appointment.id}
                   className="hover:bg-gray-50"
                 >
-
                   <td className="px-4 py-3 border-b">
                     {appointment.patient_name}
                   </td>
@@ -114,11 +105,10 @@ export default function AppointmentTable({
                   </td>
 
                   <td className="px-4 py-3 border-b">
-                    {appointment.reason || "—"}
+                    {appointment.reason ?? "—"}
                   </td>
 
                   <td className="px-4 py-3 border-b">
-
                     <span
                       className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
                         appointment.status === "cancelled"
@@ -130,13 +120,10 @@ export default function AppointmentTable({
                     >
                       {appointment.status}
                     </span>
-
                   </td>
 
                   <td className="px-4 py-3 border-b">
-
                     <div className="flex justify-center gap-2">
-
                       <button
                         type="button"
                         onClick={() =>
@@ -156,22 +143,14 @@ export default function AppointmentTable({
                       >
                         Cancel
                       </button>
-
                     </div>
-
                   </td>
-
                 </tr>
-
               ))}
-
             </tbody>
-
           </table>
-
         </div>
       )}
-
     </div>
   );
 }

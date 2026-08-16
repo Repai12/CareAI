@@ -14,9 +14,6 @@ import {
   addMedication,
   updateMedication,
   deleteMedication,
-} from "../services/api";
-
-import {
   getAppointments,
   addAppointment,
   updateAppointment,
@@ -72,8 +69,9 @@ export default function Home() {
   const [loading, setLoading] =
     useState(true);
 
+  // UUID = string, NOT number
   const [editingId, setEditingId] =
-    useState<number | null>(null);
+    useState<string | null>(null);
 
 
   // ==========================================================
@@ -97,10 +95,11 @@ export default function Home() {
     setAppointmentLoading
   ] = useState(true);
 
+  // UUID = string, NOT number
   const [
     appointmentEditingId,
     setAppointmentEditingId
-  ] = useState<number | null>(null);
+  ] = useState<string | null>(null);
 
 
   // ==========================================================
@@ -121,19 +120,15 @@ export default function Home() {
   // ==========================================================
 
   async function loadMedications() {
-
     setLoading(true);
 
     try {
-
       const data = await getMedications();
 
       setMedications(data);
-
     }
 
     catch (error) {
-
       console.error(error);
 
       setNotificationType("error");
@@ -141,15 +136,11 @@ export default function Home() {
       setNotification(
         "Unable to load medications."
       );
-
     }
 
     finally {
-
       setLoading(false);
-
     }
-
   }
 
 
@@ -158,19 +149,15 @@ export default function Home() {
   // ==========================================================
 
   async function loadAppointments() {
-
     setAppointmentLoading(true);
 
     try {
-
       const data = await getAppointments();
 
       setAppointments(data);
-
     }
 
     catch (error) {
-
       console.error(error);
 
       setNotificationType("error");
@@ -178,15 +165,11 @@ export default function Home() {
       setNotification(
         "Unable to load appointments."
       );
-
     }
 
     finally {
-
       setAppointmentLoading(false);
-
     }
-
   }
 
 
@@ -195,41 +178,34 @@ export default function Home() {
   // ==========================================================
 
   useEffect(() => {
-
     loadMedications();
-
     loadAppointments();
-
   }, []);
 
 
   // ==========================================================
-  // MEDICATION FORM
+  // CLEAR MEDICATION FORM
   // ==========================================================
 
   function clearMedicationForm() {
-
-    setFormData(
-      emptyMedicationForm
-    );
+    setFormData({
+      ...emptyMedicationForm,
+    });
 
     setEditingId(null);
-
   }
 
 
   // ==========================================================
-  // APPOINTMENT FORM
+  // CLEAR APPOINTMENT FORM
   // ==========================================================
 
   function clearAppointmentForm() {
-
-    setAppointmentFormData(
-      emptyAppointmentForm
-    );
+    setAppointmentFormData({
+      ...emptyAppointmentForm,
+    });
 
     setAppointmentEditingId(null);
-
   }
 
 
@@ -237,22 +213,13 @@ export default function Home() {
   // SUCCESS MESSAGE
   // ==========================================================
 
-  function showSuccess(
-    message: string
-  ) {
-
-    setNotificationType(
-      "success"
-    );
-
+  function showSuccess(message: string) {
+    setNotificationType("success");
     setNotification(message);
 
     setTimeout(() => {
-
       setNotification("");
-
     }, 3000);
-
   }
 
 
@@ -260,22 +227,13 @@ export default function Home() {
   // ERROR MESSAGE
   // ==========================================================
 
-  function showError(
-    message: string
-  ) {
-
-    setNotificationType(
-      "error"
-    );
-
+  function showError(message: string) {
+    setNotificationType("error");
     setNotification(message);
 
     setTimeout(() => {
-
       setNotification("");
-
     }, 3000);
-
   }
 
 
@@ -292,13 +250,11 @@ export default function Home() {
       formData.start_date === "" ||
       formData.end_date === ""
     ) {
-
       showError(
         "Please fill in all medication fields."
       );
 
       return;
-
     }
 
 
@@ -306,25 +262,19 @@ export default function Home() {
       formData.end_date <
       formData.start_date
     ) {
-
       showError(
         "End date cannot be before start date."
       );
 
       return;
-
     }
 
 
     try {
 
-      if (
-        editingId === null
-      ) {
+      if (editingId === null) {
 
-        await addMedication(
-          formData
-        );
+        await addMedication(formData);
 
         showSuccess(
           "Medication added successfully."
@@ -342,14 +292,12 @@ export default function Home() {
         showSuccess(
           "Medication updated successfully."
         );
-
       }
 
 
       clearMedicationForm();
 
-      loadMedications();
-
+      await loadMedications();
     }
 
     catch (error) {
@@ -359,9 +307,7 @@ export default function Home() {
       showError(
         "Unable to save medication."
       );
-
     }
-
   }
 
 
@@ -388,23 +334,20 @@ export default function Home() {
       frequency:
         medication.frequency,
 
+      // Backend may return null
       start_date:
-        medication.start_date,
+        medication.start_date ?? "",
 
+      // Backend may return null
       end_date:
-        medication.end_date,
-
+        medication.end_date ?? "",
     });
 
 
     window.scrollTo({
-
       top: 0,
-
       behavior: "smooth",
-
     });
-
   }
 
 
@@ -413,7 +356,7 @@ export default function Home() {
   // ==========================================================
 
   async function handleDelete(
-    id: number
+    id: string
   ) {
 
     const confirmed =
@@ -423,9 +366,7 @@ export default function Home() {
 
 
     if (!confirmed) {
-
       return;
-
     }
 
 
@@ -437,8 +378,7 @@ export default function Home() {
         "Medication deleted successfully."
       );
 
-      loadMedications();
-
+      await loadMedications();
     }
 
     catch (error) {
@@ -448,9 +388,7 @@ export default function Home() {
       showError(
         "Unable to delete medication."
       );
-
     }
-
   }
 
 
@@ -476,7 +414,6 @@ export default function Home() {
       );
 
       return;
-
     }
 
 
@@ -490,7 +427,6 @@ export default function Home() {
       );
 
       return;
-
     }
 
 
@@ -520,14 +456,12 @@ export default function Home() {
         showSuccess(
           "Appointment updated successfully."
         );
-
       }
 
 
       clearAppointmentForm();
 
-      loadAppointments();
-
+      await loadAppointments();
     }
 
     catch (error) {
@@ -537,9 +471,7 @@ export default function Home() {
       showError(
         "Unable to save appointment."
       );
-
     }
-
   }
 
 
@@ -575,32 +507,29 @@ export default function Home() {
       end_time:
         appointment.end_time,
 
+      // Backend may return null
       reason:
-        appointment.reason,
+        appointment.reason ?? "",
 
+      // Backend may return null
       location:
-        appointment.location,
-
+        appointment.location ?? "",
     });
 
 
     window.scrollTo({
-
       top: 0,
-
       behavior: "smooth",
-
     });
-
   }
 
 
   // ==========================================================
-  // DELETE APPOINTMENT
+  // DELETE / CANCEL APPOINTMENT
   // ==========================================================
 
   async function handleAppointmentDelete(
-    id: number
+    id: string
   ) {
 
     const confirmed =
@@ -610,9 +539,7 @@ export default function Home() {
 
 
     if (!confirmed) {
-
       return;
-
     }
 
 
@@ -624,8 +551,7 @@ export default function Home() {
         "Appointment cancelled successfully."
       );
 
-      loadAppointments();
-
+      await loadAppointments();
     }
 
     catch (error) {
@@ -635,9 +561,7 @@ export default function Home() {
       showError(
         "Unable to cancel appointment."
       );
-
     }
-
   }
 
 
@@ -651,20 +575,14 @@ export default function Home() {
 
       <div className="max-w-7xl mx-auto px-6 py-10">
 
-
         {/* PAGE HEADER */}
 
         <h1 className="text-4xl font-bold text-center text-blue-700 mb-2">
-
           HealthCare Management System
-
         </h1>
 
-
         <p className="text-center text-gray-600 mb-8">
-
           Manage medications and medical appointments.
-
         </p>
 
 
@@ -683,9 +601,7 @@ export default function Home() {
         <section className="mb-12">
 
           <h2 className="text-3xl font-bold text-gray-800 mb-6">
-
             Medication Management
-
           </h2>
 
 
@@ -730,9 +646,7 @@ export default function Home() {
         <section>
 
           <h2 className="text-3xl font-bold text-gray-800 mb-6">
-
             Appointment Management
-
           </h2>
 
 
@@ -783,11 +697,8 @@ export default function Home() {
 
         </section>
 
-
       </div>
 
     </main>
-
   );
-
 }
