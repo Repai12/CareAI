@@ -30,8 +30,18 @@ export default function AppointmentForm({
     }));
   }
 
+  function handleSubmit(
+    e: React.FormEvent<HTMLFormElement>
+  ) {
+    e.preventDefault();
+    onSubmit();
+  }
+
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+    <form
+      onSubmit={handleSubmit}
+      className="bg-white rounded-xl shadow-md p-6 mb-8"
+    >
 
       <h2 className="text-2xl font-bold text-gray-800 mb-6">
         {editing
@@ -42,7 +52,6 @@ export default function AppointmentForm({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
         {/* Patient Name */}
-
         <div>
           <label
             htmlFor="patient_name"
@@ -62,13 +71,12 @@ export default function AppointmentForm({
               )
             }
             placeholder="Enter patient name"
+            required
             className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-
         {/* Patient Email */}
-
         <div>
           <label
             htmlFor="patient_email"
@@ -88,13 +96,12 @@ export default function AppointmentForm({
               )
             }
             placeholder="Enter patient email"
+            required
             className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-
         {/* Doctor Name */}
-
         <div>
           <label
             htmlFor="doctor_name"
@@ -114,13 +121,12 @@ export default function AppointmentForm({
               )
             }
             placeholder="Enter doctor name"
+            required
             className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-
         {/* Appointment Date */}
-
         <div>
           <label
             htmlFor="appointment_date"
@@ -139,13 +145,12 @@ export default function AppointmentForm({
                 e.target.value
               )
             }
+            required
             className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-
         {/* Start Time */}
-
         <div>
           <label
             htmlFor="start_time"
@@ -164,13 +169,12 @@ export default function AppointmentForm({
                 e.target.value
               )
             }
+            required
             className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-
         {/* End Time */}
-
         <div>
           <label
             htmlFor="end_time"
@@ -189,13 +193,12 @@ export default function AppointmentForm({
                 e.target.value
               )
             }
+            required
             className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-
         {/* Location */}
-
         <div>
           <label
             htmlFor="location"
@@ -219,9 +222,7 @@ export default function AppointmentForm({
           />
         </div>
 
-
         {/* Reason */}
-
         <div className="md:col-span-2">
 
           <label
@@ -249,14 +250,11 @@ export default function AppointmentForm({
 
       </div>
 
-
       {/* Buttons */}
-
       <div className="flex gap-3 mt-6">
 
         <button
-          type="button"
-          onClick={onSubmit}
+          type="submit"
           className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-lg transition"
         >
           {editing
@@ -264,9 +262,7 @@ export default function AppointmentForm({
             : "Create Appointment"}
         </button>
 
-
         {editing && (
-
           <button
             type="button"
             onClick={onCancel}
@@ -274,11 +270,10 @@ export default function AppointmentForm({
           >
             Cancel
           </button>
-
         )}
 
       </div>
 
-    </div>
+    </form>
   );
 }

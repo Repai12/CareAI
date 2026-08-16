@@ -6,7 +6,7 @@ interface MedicationTableProps {
   medications: Medication[];
   loading: boolean;
   onEdit: (medication: Medication) => void;
-  onDelete: (id: number) => void;
+  onDelete: (id: string) => void;
 }
 
 export default function MedicationTable({
@@ -45,19 +45,14 @@ export default function MedicationTable({
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-8">
-
       <h2 className="text-2xl font-bold mb-6 text-blue-700">
         Current Medications
       </h2>
 
       <div className="overflow-x-auto">
-
         <table className="min-w-full border border-gray-300">
-
           <thead>
-
             <tr className="bg-blue-700 text-white">
-
               <th className="border p-3">ID</th>
               <th className="border p-3">Medicine</th>
               <th className="border p-3">Dosage</th>
@@ -65,20 +60,15 @@ export default function MedicationTable({
               <th className="border p-3">Start Date</th>
               <th className="border p-3">End Date</th>
               <th className="border p-3">Actions</th>
-
             </tr>
-
           </thead>
 
           <tbody>
-
             {medications.map((medication) => (
-
               <tr
                 key={medication.id}
                 className="hover:bg-blue-50"
               >
-
                 <td className="border p-3 text-center">
                   {medication.id}
                 </td>
@@ -96,18 +86,17 @@ export default function MedicationTable({
                 </td>
 
                 <td className="border p-3">
-                  {medication.start_date}
+                  {medication.start_date ?? "—"}
                 </td>
 
                 <td className="border p-3">
-                  {medication.end_date}
+                  {medication.end_date ?? "—"}
                 </td>
 
                 <td className="border p-3">
-
                   <div className="flex justify-center gap-2">
-
                     <button
+                      type="button"
                       onClick={() => onEdit(medication)}
                       className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg"
                     >
@@ -115,26 +104,19 @@ export default function MedicationTable({
                     </button>
 
                     <button
+                      type="button"
                       onClick={() => onDelete(medication.id)}
                       className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
                     >
                       Delete
                     </button>
-
                   </div>
-
                 </td>
-
               </tr>
-
             ))}
-
           </tbody>
-
         </table>
-
       </div>
-
     </div>
   );
 }

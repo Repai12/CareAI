@@ -1,10 +1,18 @@
 import axios from "axios";
 
-import { MedicationFormData } from "../types/medication";
+import {
+  Medication,
+  MedicationFormData,
+} from "../types/medication";
+
 import {
   Appointment,
   AppointmentFormData,
 } from "../types/appointment";
+
+
+const API_BASE_URL =
+  "http://127.0.0.1:8000";
 
 
 // ============================================================
@@ -12,23 +20,24 @@ import {
 // ============================================================
 
 const MEDICATION_API =
-  "http://127.0.0.1:8000/medications";
+  `${API_BASE_URL}/medications`;
 
 
-export const getMedications = async () => {
+export const getMedications = async (): Promise<
+  Medication[]
+> => {
 
   const response = await axios.get(
     `${MEDICATION_API}/`
   );
 
   return response.data;
-
 };
 
 
 export const addMedication = async (
   data: MedicationFormData
-) => {
+): Promise<Medication> => {
 
   const response = await axios.post(
     `${MEDICATION_API}/`,
@@ -36,14 +45,13 @@ export const addMedication = async (
   );
 
   return response.data;
-
 };
 
 
 export const updateMedication = async (
-  id: number,
+  id: string,
   data: MedicationFormData
-) => {
+): Promise<Medication> => {
 
   const response = await axios.put(
     `${MEDICATION_API}/${id}`,
@@ -51,20 +59,16 @@ export const updateMedication = async (
   );
 
   return response.data;
-
 };
 
 
 export const deleteMedication = async (
-  id: number
-) => {
+  id: string
+): Promise<void> => {
 
-  const response = await axios.delete(
+  await axios.delete(
     `${MEDICATION_API}/${id}`
   );
-
-  return response.data;
-
 };
 
 
@@ -73,7 +77,7 @@ export const deleteMedication = async (
 // ============================================================
 
 const APPOINTMENT_API =
-  "http://127.0.0.1:8000/appointments";
+  `${API_BASE_URL}/appointments`;
 
 
 export const getAppointments = async (): Promise<
@@ -85,13 +89,12 @@ export const getAppointments = async (): Promise<
   );
 
   return response.data;
-
 };
 
 
 export const addAppointment = async (
   data: AppointmentFormData
-) => {
+): Promise<Appointment> => {
 
   const response = await axios.post(
     `${APPOINTMENT_API}/`,
@@ -99,14 +102,13 @@ export const addAppointment = async (
   );
 
   return response.data;
-
 };
 
 
 export const updateAppointment = async (
-  id: number,
+  id: string,
   data: AppointmentFormData
-) => {
+): Promise<Appointment> => {
 
   const response = await axios.put(
     `${APPOINTMENT_API}/${id}`,
@@ -114,18 +116,14 @@ export const updateAppointment = async (
   );
 
   return response.data;
-
 };
 
 
 export const deleteAppointment = async (
-  id: number
-) => {
+  id: string
+): Promise<void> => {
 
-  const response = await axios.delete(
+  await axios.delete(
     `${APPOINTMENT_API}/${id}`
   );
-
-  return response.data;
-
 };

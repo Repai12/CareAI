@@ -4,6 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from .database import Base, engine
 from .routes import router
 from .appointments import router as appointment_router
+from .calendar import router as calendar_router
+from .medication_logs import router as medication_log_router
+from .visit_notes import router as visit_note_router
 
 
 # ============================================================
@@ -48,11 +51,20 @@ app.add_middleware(
 # ROUTERS
 # ============================================================
 
-# Medication routes
+# Existing medication routes
 app.include_router(router)
 
 # Appointment routes
 app.include_router(appointment_router)
+
+# Google Calendar routes
+app.include_router(calendar_router)
+
+# Medication Reminder & Adherence routes
+app.include_router(medication_log_router)
+
+# Doctor Visit History & Prescription Notes routes
+app.include_router(visit_note_router)
 
 
 # ============================================================
@@ -61,8 +73,6 @@ app.include_router(appointment_router)
 
 @app.get("/")
 def home():
-
     return {
-        "message":
-            "HealthCare Management API is running"
+        "message": "HealthCare Management API is running"
     }

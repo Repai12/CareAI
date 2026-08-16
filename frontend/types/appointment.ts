@@ -1,5 +1,5 @@
 export interface Appointment {
-  id: number;
+  id: string;
 
   patient_name: string;
   patient_email: string;
@@ -10,13 +10,12 @@ export interface Appointment {
   start_time: string;
   end_time: string;
 
-  reason: string;
-  location: string;
+  reason: string | null;
+  location: string | null;
 
   status: string;
   google_event_id: string | null;
 }
-
 
 export interface AppointmentFormData {
   patient_name: string;
