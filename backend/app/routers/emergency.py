@@ -1,26 +1,27 @@
-import uuid
+﻿import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.auth import get_current_user
-from app.models import User, EmergencyContact, FallIncident
+from app.models import User, EmergencyContact, FallIncident, SafetyCheckin
 from app.services.twilio_service import send_sms
+from app.services.safety_checkin_service import start_safety_checkin_scheduler
 from app.schemas import (
     EmergencyContactCreate,
     EmergencyContactUpdate,
     EmergencyContactOut,
     FallIncidentCreate,
     FallIncidentOut,
+    SafetyCheckinOut,
 )
-from app.services.twilio_service import send_sms
 
 router = APIRouter(
     prefix="/emergency",
     tags=["Emergency Contacts"]
 )
-
+start_safety_checkin_scheduler()
 
 @router.post(
     "/contacts",
@@ -164,9 +165,6 @@ def delete_emergency_contact(
 )
 def log_fall_incident(
     payload: FallIncidentCreate,
-
-@router.post("/sos")
-def trigger_sos(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -201,52 +199,23 @@ def trigger_sos(
             pass
 
     return incident
-    if not contacts:
-        raise HTTPException(
-            status_code=404,
-            detail="No emergency contacts registered"
-        )
 
-    message = (
-        f"EMERGENCY ALERT from CareAI! "
-        f"{current_user.name} has triggered an SOS alert. "
-        f"Please contact them immediately."
+
+@router.post(
+    "/checkin",
+    response_model=SafetyCheckinOut,
+    status_code=201
+)
+def daily_safety_checkin(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    checkin = SafetyCheckin(
+        user_id=current_user.id
     )
 
-    sent = []
-    failed = []
+    db.add(checkin)
+    db.commit()
+    db.refresh(checkin)
 
-    for contact in contacts:
-        try:
-            result = send_sms(contact.phone, message)
-
-            sent.append({
-                "contact": contact.name,
-                "phone": contact.phone,
-                "message_sid": result.sid
-            })
-
-        except Exception as e:
-            failed.append({
-                "contact": contact.name,
-                "phone": contact.phone,
-                "error": str(e)
-            })
-
-    if not sent:
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "message": "SOS triggered but no SMS could be sent",
-                "failed": failed
-            }
-        )
-
-    return {
-        "message": "SOS alert processed",
-        "total_contacts": len(contacts),
-        "messages_sent": len(sent),
-        "messages_failed": len(failed),
-        "sent": sent,
-        "failed": failed
-    }
+    return checkin
