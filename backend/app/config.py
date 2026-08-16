@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     RESEND_API_KEY: str = ""
     RESEND_FROM_EMAIL: str = "onboarding@resend.dev"
 
+    # Member 4 (Repai) - Gemini API for Doctor AI Patient Summary (Module 3/7)
+    GEMINI_API_KEY: str = ""
+
     class Config:
         env_file = None
 

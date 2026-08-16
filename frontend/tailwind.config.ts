@@ -16,6 +16,7 @@ const config: Config = {
         sageLight: "#E4EEE9",  // light sage for cards/badges
         alert: "#B3441E",      // muted clay-red for SOS/alerts only
         gold: "#C79A3B",       // muted gold for "upcoming" accents
+        steel: "#3E6480",      // muted steel blue for vitals accents
       },
       fontFamily: {
         display: ["'Source Serif 4'", "Georgia", "serif"],

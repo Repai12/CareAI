@@ -14,6 +14,8 @@ from app.models.vitals import VitalsLog
 from app.models.medication import Medication, Appointment
 from app.models.email_log import EmailLog
 from app.services.email_service import send_email
+from app.services.notification_service import create_notification
+from app.models.notification import NotificationCategory
 
 
 def _build_summary_html(patient: User, vitals: list[VitalsLog], meds: list[Medication], appts: list[Appointment]) -> str:
@@ -104,4 +106,17 @@ def generate_weekly_report(db: Session, patient_id) -> list[EmailLog]:
     db.commit()
     for log in logs:
         db.refresh(log)
+
+    # Add a family-visible event so the Notification Center reflects
+    # this real action, not just the EmailLog audit table.
+    if logs:
+        any_failed = any(l.status == "FAILED" for l in logs)
+        create_notification(
+            db, patient_id,
+            event_type="REPORT_SENT" if not any_failed else "REPORT_FAILED",
+            title="Weekly health report sent" if not any_failed else "Weekly report had a delivery issue",
+            message=f"Sent to {len(logs)} recipient(s) for {patient.name}.",
+            category=NotificationCategory.appointment,
+        )
+
     return logs
