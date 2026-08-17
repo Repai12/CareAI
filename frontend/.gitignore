@@ -10,14 +10,12 @@ venv/
 # Environment variables
 .env
 .env.*
+.env.local
 !.env.example
 
 # Google API credentials
 credentials.json
 token.json
-
-# Alembic
-__pycache__/
 
 # Node / Next.js
 node_modules/
