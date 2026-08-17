@@ -5,6 +5,37 @@ import SectionCard from "@/components/SectionCard";
 import { LeafIcon } from "./icons";
 import { DietPlanWithLogs, generateDietPlan, logDietAdherence } from "@/lib/api/vitals";
 
+function GroceryList({ items }: { items: string[] }) {
+  const [checked, setChecked] = useState<Set<number>>(new Set());
+
+  function toggle(i: number) {
+    setChecked((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i);
+      else next.add(i);
+      return next;
+    });
+  }
+
+  return (
+    <div className="mt-3">
+      <p className="text-xs uppercase tracking-wide text-ink/40 font-semibold mb-2">
+        Grocery list ({checked.size}/{items.length} checked)
+      </p>
+      <ul className="grid grid-cols-2 gap-x-4 gap-y-1 max-h-48 overflow-y-auto">
+        {items.map((item, i) => (
+          <li key={i}>
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" checked={checked.has(i)} onChange={() => toggle(i)} className="accent-sage" />
+              <span className={checked.has(i) ? "line-through text-ink/40" : "text-ink/80"}>{item}</span>
+            </label>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export default function DietAdvisorPanel({
   isOwner,
   initial,
@@ -63,7 +94,11 @@ export default function DietAdvisorPanel({
       ) : (
         <div>
           <p className="text-xs text-ink/40 italic mb-2">Based on: {data.plan.based_on_summary}</p>
-          <p className="text-sm text-ink whitespace-pre-wrap bg-sageLight/50 rounded-lg p-3">{data.plan.ai_plan}</p>
+          <p className="text-sm text-ink whitespace-pre-wrap bg-sageLight/50 rounded-lg p-3 max-h-80 overflow-y-auto">
+            {data.plan.ai_plan}
+          </p>
+
+          {data.plan.grocery_list.length > 0 && <GroceryList key={data.plan.id} items={data.plan.grocery_list} />}
 
           {isOwner && (
             <div className="flex items-center gap-2 mt-3">

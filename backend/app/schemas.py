@@ -83,6 +83,12 @@ class VitalsEntryOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class FlaggedValue(BaseModel):
+    label: str
+    value: str
+    status: str  # "high" | "low" | "normal"
+
+
 # ============================================================
 # MEDICATION — TEAM / DASHBOARD
 # ============================================================
@@ -150,6 +156,7 @@ class HealthReportOut(BaseModel):
     id: uuid.UUID
     filename: str
     ai_summary: Optional[str] = None
+    flagged_values: List[FlaggedValue] = []
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -163,12 +170,17 @@ class SymptomCheckIn(BaseModel):
     symptoms: str
 
 
+class SymptomReplyIn(BaseModel):
+    message: str
+
+
 class SymptomLogOut(BaseModel):
     id: uuid.UUID
     symptoms: str
     ai_response: str
     urgency: str
     escalated: bool
+    parent_id: Optional[uuid.UUID] = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -182,6 +194,7 @@ class DietPlanOut(BaseModel):
     id: uuid.UUID
     based_on_summary: str
     ai_plan: str
+    grocery_list: List[str] = []
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -391,8 +404,7 @@ class VisitNoteResponse(VisitNoteBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
-    class Config:
-        from_attributes = True
+
 
 class SafetyCheckinOut(BaseModel):
     id: uuid.UUID
@@ -400,6 +412,4 @@ class SafetyCheckinOut(BaseModel):
     checked_in_at: datetime
     is_checked_in: bool
 
-    class Config:
-        from_attributes = True
-
+    model_config = ConfigDict(from_attributes=True)
