@@ -1,5 +1,59 @@
-.env
+# =========================
+# Python / FastAPI
+# =========================
+
 __pycache__/
-*.pyc
+*.py[cod]
+*.so
+
 .venv/
 venv/
+env/
+ENV/
+
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# =========================
+# Environment Variables
+# =========================
+
+.env
+.env.*
+!.env.example
+
+# =========================
+# Google Calendar OAuth
+# =========================
+
+credentials.json
+token.json
+
+# =========================
+# Database
+# =========================
+
+*.db
+*.sqlite
+*.sqlite3
+
+# =========================
+# Logs
+# =========================
+
+*.log
+
+# =========================
+# IDE
+# =========================
+
+.vscode/
+
+# =========================
+# Temporary Files
+# =========================
+
+*.tmp
+*.temp
+*.bak
