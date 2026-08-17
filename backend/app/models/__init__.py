@@ -12,4 +12,5 @@ from app.models.medication import Medication, Appointment, AppointmentStatus
 from app.models.email_log import EmailLog
 from app.models.emergency import EmergencyContact
 from app.models.fall_incident import FallIncident
+from app.models.safety_checkin import SafetyCheckin
 # from app.models.notification import Notification
