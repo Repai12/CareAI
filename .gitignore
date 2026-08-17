@@ -1,91 +1,17 @@
-# ============================================================
-# PYTHON
-# ============================================================
-
-venv/
-.venv/
-backend/venv/
-backend/.venv/
-
-__pycache__/
-**/__pycache__/
-
-*.py[cod]
-*$py.class
-
-
-# ============================================================
-# ENVIRONMENT VARIABLES / SECRETS
-# ============================================================
-
-.env
-.env.*
-**/.env
-**/.env.*
-
-!.env.example
-!**/.env.example
-
-
-# ============================================================
-# GOOGLE OAUTH / API CREDENTIALS
-# ============================================================
-
-credentials.json
-token.json
-client_secret*.json
-google_credentials.json
-
-*.pem
-*.key
-*.p12
-*.pfx
-
-
-# ============================================================
-# NEXT.JS / FRONTEND
-# ============================================================
-
-node_modules/
-frontend/node_modules/
-
-.next/
-frontend/.next/
-
-out/
-frontend/out/
-
-
-# ============================================================
-# IDE / EDITOR
-# ============================================================
-
-.vscode/
-.vscode/*
-.idea/
-
-*.code-workspace
-
-
-# ============================================================
-# LOGS
-# ============================================================
-
-*.log
-logs/
-
-
-# ============================================================
-# OPERATING SYSTEM FILES
-# ============================================================
-
-.DS_Store
-Thumbs.db
-
-
-# ============================================================
-# TEMPORARY FILES
-# ============================================================
-
 *.tmp
 *.temp
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# Backend (added by member4)
+backend/venv/
+backend/.env
+backend/__pycache__/
+backend/**/__pycache__/
+
+# Frontend (added by member4)
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
