@@ -49,6 +49,7 @@ class HealthReport(Base):
     file_data = Column(LargeBinary, nullable=False)      # original PDF bytes
     extracted_text = Column(Text, nullable=True)          # raw text pulled from the PDF
     ai_summary = Column(Text, nullable=True)               # Gemini's plain-English summary
+    flagged_values = Column(Text, nullable=True)            # JSON list of {label, value, status}
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -74,6 +75,9 @@ class SymptomLog(Base):
     ai_response = Column(Text, nullable=False)
     urgency = Column(String, nullable=False, default=UrgencyLevel.normal.value)
     escalated = Column(Boolean, default=False)  # True if this triggered a family notification
+    # Follow-up thread: null on the original check; set to the root log's id
+    # on a reply, so "add more detail" doesn't need a one-shot new Q&A.
+    parent_id = Column(UUID(as_uuid=True), ForeignKey("symptom_logs.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -89,7 +93,8 @@ class DietPlan(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     patient_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     based_on_summary = Column(Text, nullable=False)   # the vitals-trend context fed to Gemini
-    ai_plan = Column(Text, nullable=False)             # structured plan text
+    ai_plan = Column(Text, nullable=False)             # structured 7-day plan text
+    grocery_list = Column(Text, nullable=True)          # JSON list of grocery item strings
     created_at = Column(DateTime, default=datetime.utcnow)
 
     logs = relationship("DietLog", back_populates="plan", cascade="all, delete-orphan")

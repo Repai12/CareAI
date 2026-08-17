@@ -113,10 +113,17 @@ class VitalsEntryOut(BaseModel):
         from_attributes = True
 
 
+class FlaggedValue(BaseModel):
+    label: str
+    value: str
+    status: str  # "high" | "low" | "normal"
+
+
 class HealthReportOut(BaseModel):
     id: uuid.UUID
     filename: str
     ai_summary: Optional[str]
+    flagged_values: List[FlaggedValue] = []
     created_at: datetime
 
     class Config:
@@ -127,12 +134,17 @@ class SymptomCheckIn(BaseModel):
     symptoms: str
 
 
+class SymptomReplyIn(BaseModel):
+    message: str
+
+
 class SymptomLogOut(BaseModel):
     id: uuid.UUID
     symptoms: str
     ai_response: str
     urgency: str
     escalated: bool
+    parent_id: Optional[uuid.UUID] = None
     created_at: datetime
 
     class Config:
@@ -143,6 +155,7 @@ class DietPlanOut(BaseModel):
     id: uuid.UUID
     based_on_summary: str
     ai_plan: str
+    grocery_list: List[str] = []
     created_at: datetime
 
     class Config:
@@ -204,6 +217,18 @@ class FallIncidentOut(BaseModel):
     severity: str
     details: Optional[str]
     occurred_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# NOTE (Mubasshira): added below - referenced by routers/emergency.py but
+# missing from the merged Module 3 check-in PR (#16). Faisal - please verify.
+class SafetyCheckinOut(BaseModel):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    checked_in_at: datetime
+    is_checked_in: bool
 
     class Config:
         from_attributes = True
