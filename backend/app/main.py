@@ -31,10 +31,10 @@ from app.routers import emergency as emergency_router
 
 # Member 2 — Afifa
 from app.routers import medications as medications_router
-from app.routers.appointments import router as appointment_router
-from app.routers.calendar import router as calendar_router
-from app.routers.medication_logs import router as medication_log_router
-from app.routers.visit_notes import router as visit_note_router
+#from app.routers.appointments import router as appointment_router
+#from app.routers.calendar import router as calendar_router
+#from app.routers.medication_logs import router as medication_log_router
+#from app.routers.visit_notes import router as visit_note_router
 
 # Scheduler
 from app.services.scheduler import start_scheduler
@@ -98,7 +98,7 @@ app.add_middleware(
         "http://127.0.0.1:3000",
     ],
 
-    allow_origins=["*"],
+   
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -128,18 +128,10 @@ app.include_router(ai_summary.router)
 
 # Medication management
 app.include_router(medications_router.router)
-
-# Appointment management
-app.include_router(appointment_router)
-
-# Google Calendar integration
-app.include_router(calendar_router)
-
-# Medication reminder and adherence tracking
-app.include_router(medication_log_router)
-
-# Doctor visit history and prescription notes
-app.include_router(visit_note_router)
+#app.include_router(appointment_router)
+#app.include_router(calendar_router)
+#app.include_router(medication_log_router)
+#app.include_router(visit_note_router)
 
 
 # ============================================================
@@ -156,6 +148,7 @@ app.include_router(dashboard.router)
 app.include_router(notifications.router)
 app.include_router(reports.router)
 app.include_router(ai_summary.router)
+
 
 # Startup Event to Start Safety Check-in Scheduler
 @app.on_event("startup")

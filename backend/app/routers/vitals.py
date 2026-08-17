@@ -14,13 +14,15 @@ Endpoints:
     GET    /vitals/{patient_id}/reports               - list report history
 
     POST   /vitals/symptom-check                      - context-aware symptom check + urgency triage (Feature 3)
-    GET    /vitals/{patient_id}/symptom-logs           - symptom check history
+    POST   /vitals/symptom-check/{log_id}/reply         - follow-up reply within a symptom-check thread
+    GET    /vitals/{patient_id}/symptom-logs           - symptom check history (threaded)
 
-    POST   /vitals/diet-plan/generate                 - vitals-trend-aware diet plan (Feature 4)
+    POST   /vitals/diet-plan/generate                 - vitals-trend-aware 7-day plan + grocery list (Feature 4)
     GET    /vitals/{patient_id}/diet-plan/latest        - latest plan + adherence history
     POST   /vitals/diet-plan/log                       - log adherence against a plan
 """
 
+import json
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
@@ -32,7 +34,7 @@ from app.models.user import User, UserRole, PatientLink
 from app.models.vitals import VitalsLog, HealthReport, SymptomLog, DietPlan, DietLog, UrgencyLevel
 from app.schemas import (
     VitalsIn, VitalsUpdate, VitalsEntryOut, HealthReportOut,
-    SymptomCheckIn, SymptomLogOut, DietPlanOut, DietLogIn, DietLogOut,
+    SymptomCheckIn, SymptomReplyIn, SymptomLogOut, DietPlanOut, DietLogIn, DietLogOut,
 )
 from app.services import groq_health_service as ai_service
 from app.services.notification_service import create_notification
@@ -80,6 +82,33 @@ def _to_vitals_out(v: VitalsLog) -> VitalsEntryOut:
         id=v.id, blood_pressure=v.blood_pressure, sugar_level=v.sugar_level,
         heart_rate=v.heart_rate, temperature=v.temperature, notes=v.notes,
         logged_at=v.logged_at, is_abnormal=_is_abnormal(v),
+    )
+
+
+def _parse_json_list(text) -> list:
+    """flagged_values / grocery_list are stored as raw JSON text since
+    they're AI-generated, variable-shape data - parse defensively so a
+    malformed or missing value never breaks the response."""
+    if not text:
+        return []
+    try:
+        parsed = json.loads(text)
+        return parsed if isinstance(parsed, list) else []
+    except (json.JSONDecodeError, TypeError):
+        return []
+
+
+def _to_health_report_out(r: HealthReport) -> HealthReportOut:
+    return HealthReportOut(
+        id=r.id, filename=r.filename, ai_summary=r.ai_summary,
+        flagged_values=_parse_json_list(r.flagged_values), created_at=r.created_at,
+    )
+
+
+def _to_diet_plan_out(p: DietPlan) -> DietPlanOut:
+    return DietPlanOut(
+        id=p.id, based_on_summary=p.based_on_summary, ai_plan=p.ai_plan,
+        grocery_list=_parse_json_list(p.grocery_list), created_at=p.created_at,
     )
 
 
@@ -214,14 +243,15 @@ async def upload_health_report(
         raise HTTPException(422, "File too large (max 10 MB)")
 
     extracted_text = ai_service.extract_pdf_text(file_bytes)
-    summary = ai_service.summarize_health_report(extracted_text)
+    result = ai_service.summarize_health_report(extracted_text)
 
     report = HealthReport(
         patient_id=current_user.id,
         filename=file.filename or "report.pdf",
         file_data=file_bytes,
         extracted_text=extracted_text,
-        ai_summary=summary,
+        ai_summary=result["summary"],
+        flagged_values=json.dumps(result["flagged_values"]),
     )
     db.add(report)
     db.commit()
@@ -235,7 +265,7 @@ async def upload_health_report(
         category=NotificationCategory.appointment,
     )
 
-    return report
+    return _to_health_report_out(report)
 
 
 @router.get("/{patient_id}/reports", response_model=list[HealthReportOut])
@@ -245,12 +275,13 @@ def list_health_reports(
     current_user: User = Depends(get_current_user),
 ):
     _assert_can_view(patient_id, current_user, db)
-    return (
+    reports = (
         db.query(HealthReport)
         .filter(HealthReport.patient_id == patient_id)
         .order_by(HealthReport.created_at.desc())
         .all()
     )
+    return [_to_health_report_out(r) for r in reports]
 
 
 # ---------------------------------------------------------------------------
@@ -296,6 +327,61 @@ def symptom_check(
     return log
 
 
+@router.post("/symptom-check/{log_id}/reply", response_model=SymptomLogOut)
+def reply_to_symptom_check(
+    log_id: uuid.UUID,
+    payload: SymptomReplyIn,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Follow-up reply within an existing symptom-check thread, e.g. the
+    patient adding more detail after the first AI response instead of
+    starting a brand new one-shot check."""
+    _require_patient(current_user)
+    if not payload.message.strip():
+        raise HTTPException(422, "Please describe what's changed or add more detail")
+
+    anchor = db.query(SymptomLog).filter(SymptomLog.id == log_id).first()
+    if not anchor:
+        raise HTTPException(404, "Symptom check not found")
+    if anchor.patient_id != current_user.id:
+        raise HTTPException(403, "You can only reply to your own symptom checks")
+
+    root_id = anchor.parent_id or anchor.id
+    thread = (
+        db.query(SymptomLog)
+        .filter((SymptomLog.id == root_id) | (SymptomLog.parent_id == root_id))
+        .order_by(SymptomLog.created_at)
+        .all()
+    )
+
+    result = ai_service.follow_up_symptoms(db, current_user.id, thread, payload.message)
+    is_emergency = result["urgency"] == UrgencyLevel.emergency.value
+
+    reply = SymptomLog(
+        patient_id=current_user.id,
+        symptoms=payload.message,
+        ai_response=result["advice"],
+        urgency=result["urgency"],
+        escalated=is_emergency,
+        parent_id=root_id,
+    )
+    db.add(reply)
+    db.commit()
+    db.refresh(reply)
+
+    if is_emergency:
+        create_notification(
+            db, current_user.id,
+            event_type="SYMPTOM_CHECK_EMERGENCY",
+            title="AI symptom checker flagged an emergency",
+            message=f"Reported symptoms: {payload.message[:200]}",
+            category=NotificationCategory.emergency,
+        )
+
+    return reply
+
+
 @router.get("/{patient_id}/symptom-logs", response_model=list[SymptomLogOut])
 def get_symptom_logs(
     patient_id: uuid.UUID,
@@ -327,11 +413,12 @@ def generate_diet_plan(
         patient_id=current_user.id,
         based_on_summary=result["based_on_summary"],
         ai_plan=result["plan"],
+        grocery_list=json.dumps(result["grocery_list"]),
     )
     db.add(plan)
     db.commit()
     db.refresh(plan)
-    return plan
+    return _to_diet_plan_out(plan)
 
 
 @router.get("/{patient_id}/diet-plan/latest")
@@ -360,7 +447,7 @@ def get_latest_diet_plan(
     adherence_rate = round(followed_count / len(logs) * 100) if logs else None
 
     return {
-        "plan": DietPlanOut.model_validate(plan),
+        "plan": _to_diet_plan_out(plan),
         "logs": [DietLogOut.model_validate(l) for l in logs],
         "adherence_rate": adherence_rate,
     }

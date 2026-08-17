@@ -23,10 +23,17 @@ export interface VitalsIn {
   notes?: string;
 }
 
+export interface FlaggedValue {
+  label: string;
+  value: string;
+  status: "high" | "low" | "normal";
+}
+
 export interface HealthReportOut {
   id: string;
   filename: string;
   ai_summary: string | null;
+  flagged_values: FlaggedValue[];
   created_at: string;
 }
 
@@ -36,6 +43,7 @@ export interface SymptomLogOut {
   ai_response: string;
   urgency: "normal" | "monitor" | "urgent" | "emergency";
   escalated: boolean;
+  parent_id: string | null;
   created_at: string;
 }
 
@@ -43,6 +51,7 @@ export interface DietPlanOut {
   id: string;
   based_on_summary: string;
   ai_plan: string;
+  grocery_list: string[];
   created_at: string;
 }
 
@@ -112,6 +121,13 @@ export function checkSymptoms(symptoms: string) {
 
 export function getSymptomLogs(patientId: string) {
   return apiFetch(`/vitals/${patientId}/symptom-logs`) as Promise<SymptomLogOut[]>;
+}
+
+export function replySymptomCheck(logId: string, message: string) {
+  return apiFetch(`/vitals/symptom-check/${logId}/reply`, {
+    method: "POST",
+    body: JSON.stringify({ message }),
+  }) as Promise<SymptomLogOut>;
 }
 
 // --- Feature 4: AI Diet Advisor ---
