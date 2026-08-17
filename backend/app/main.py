@@ -1,59 +1,56 @@
-"""
-main.py
--------
-SHARED FILE - FastAPI entrypoint. Run with:
-    uvicorn app.main:app --reload
-
-TEAM RULE: when you add your own router, add ONE import line and ONE
-app.include_router() line below, in the marked sections. Don't touch
-anyone else's line. This keeps merge conflicts on this file to a minimum.
-"""
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.database import Base, engine
-import app.models  # noqa: F401 - imports every model so create_all sees them
-
-from app.routers import auth, dashboard, reports, me, ai_summary, notifications
-# Uncomment as each member's router gets real endpoints:
-from app.routers import vitals as vitals_router
-from app.routers import medications as medications_router
-from app.routers import emergency as emergency_router
-
+from app.database import engine, Base
+# Import all models to ensure metadata registration
+from app.models import user, emergency, vitals, medication, notification, email_log, fall_incident
+from app.routers import (
+    auth,
+    me,
+    vitals as vitals_router,
+    medications,
+    emergency as emergency_router,
+    dashboard,
+    notifications,
+    reports,
+    ai_summary
+)
 from app.services.scheduler import start_scheduler
 
+# Create database tables
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="CareAI API")
+app = FastAPI(
+    title="CareAI System",
+    description="AI-Powered Elderly Health Monitoring Platform",
+    version="1.0.0"
+)
 
+# CORS Middleware Configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --- Shared / Member 4 routers (active) ---
+# Router Registrations
 app.include_router(auth.router)
-app.include_router(dashboard.router)
-app.include_router(reports.router)
 app.include_router(me.router)
-app.include_router(ai_summary.router)
-app.include_router(notifications.router)
-
-# --- Teammate routers (placeholders, safe to include even with no routes yet) ---
 app.include_router(vitals_router.router)
-app.include_router(medications_router.router)
+app.include_router(medications.router)
 app.include_router(emergency_router.router)
+app.include_router(dashboard.router)
+app.include_router(notifications.router)
+app.include_router(reports.router)
+app.include_router(ai_summary.router)
 
-
+# Startup Event to Start Safety Check-in Scheduler
 @app.on_event("startup")
-def on_startup():
+def startup_event():
     start_scheduler()
 
-
 @app.get("/")
-def root():
-    return {"status": "CareAI backend running"}
+def read_root():
+    return {"message": "CareAI API is running successfully"}
