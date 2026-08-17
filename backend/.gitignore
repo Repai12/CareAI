@@ -1,36 +1,59 @@
-# Python virtual environment
-venv/
-.venv/
+# =========================
+# Python / FastAPI
+# =========================
 
-# Python cache
 __pycache__/
-**/__pycache__/
 *.py[cod]
-*$py.class
+*.so
 
-# Environment variables / secrets
+.venv/
+venv/
+env/
+ENV/
+
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# =========================
+# Environment Variables
+# =========================
+
 .env
 .env.*
 !.env.example
 
-# Google OAuth credentials
+# =========================
+# Google Calendar OAuth
+# =========================
+
 credentials.json
 token.json
-client_secret*.json
-google_credentials.json
 
-# Other private key files
-*.pem
-*.key
-*.p12
-*.pfx
+# =========================
+# Database
+# =========================
 
+*.db
+*.sqlite
+*.sqlite3
+
+# =========================
 # Logs
+# =========================
+
 *.log
 
+# =========================
 # IDE
+# =========================
+
 .vscode/
 
-# OS files
-.DS_Store
-Thumbs.db
+# =========================
+# Temporary Files
+# =========================
+
+*.tmp
+*.temp
+*.bak
