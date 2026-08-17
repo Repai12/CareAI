@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     SAFETY_CHECKIN_TIMEOUT_HOURS: int = 24
     # Member 1 (Mubasshira) - Groq API for Report Analyzer / Symptom Checker / Diet
     GROQ_API_KEY: str = ""
+    TWILIO_ACCOUNT_SID: str = ""
+    TWILIO_AUTH_TOKEN: str = ""
+    TWILIO_PHONE_NUMBER: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",

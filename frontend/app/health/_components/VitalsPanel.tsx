@@ -3,6 +3,7 @@
 import { useState } from "react";
 import SectionCard from "@/components/SectionCard";
 import { ClipboardIcon } from "./icons";
+import Sparkline from "./Sparkline";
 import { VitalsEntryOut, VitalsIn, logVitals, deleteVitals } from "@/lib/api/vitals";
 
 export default function VitalsPanel({
@@ -98,6 +99,20 @@ export default function VitalsPanel({
       )}
 
       {error && <p className="text-alert text-sm mb-3">{error}</p>}
+
+      {history.length >= 2 && (
+        <div className="flex items-center justify-between bg-steel/5 rounded-lg px-3 py-2 mb-4">
+          <div>
+            <p className="text-xs text-steel font-medium">Sugar trend (last {Math.min(7, history.length)})</p>
+            <p className="text-sm text-ink/60">
+              {history[Math.min(6, history.length - 1)].sugar_level} → {history[0].sugar_level} mg/dL
+            </p>
+          </div>
+          <div className="text-steel">
+            <Sparkline values={history.slice(0, 7).map((v) => v.sugar_level).reverse()} />
+          </div>
+        </div>
+      )}
 
       <p className="text-xs uppercase tracking-wide text-ink/40 font-semibold mb-2">History</p>
       {history.length === 0 ? (
