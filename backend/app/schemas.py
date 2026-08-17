@@ -207,3 +207,13 @@ class FallIncidentOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class SafetyCheckinOut(BaseModel):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    checked_in_at: datetime
+    is_checked_in: bool
+
+    class Config:
+        from_attributes = True
+
