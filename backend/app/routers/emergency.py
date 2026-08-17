@@ -6,7 +6,7 @@ from app.database import get_db
 from app.auth import get_current_user
 from app.models.user import User
 from app.models.emergency import EmergencyContact
-from app.schemas import EmergencyContactCreate, EmergencyContactResponse
+from app.schemas import EmergencyContactCreate, EmergencyContactOut
 from app.services.twilio_service import twilio_service
 
 router = APIRouter(
@@ -14,7 +14,7 @@ router = APIRouter(
     tags=["Emergency Management"]
 )
 
-@router.get("/contacts", response_model=List[EmergencyContactResponse])
+@router.get("/contacts", response_model=List[EmergencyContactOut])
 def get_emergency_contacts(
     current_user: User = Depends(get_current_user), 
     db: Session = Depends(get_db)
@@ -24,7 +24,7 @@ def get_emergency_contacts(
     ).order_by(EmergencyContact.priority.asc()).all()
     return contacts
 
-@router.post("/contacts", response_model=EmergencyContactResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/contacts", response_model=EmergencyContactOut, status_code=status.HTTP_201_CREATED)
 def create_emergency_contact(
     contact_data: EmergencyContactCreate,
     current_user: User = Depends(get_current_user),
