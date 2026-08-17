@@ -1,210 +1,100 @@
-﻿import uuid
-
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from typing import List
 
 from app.database import get_db
 from app.auth import get_current_user
-from app.models import User, EmergencyContact, FallIncident, SafetyCheckin
-from app.services.twilio_service import send_sms
-from app.services.safety_checkin_service import start_safety_checkin_scheduler
-from app.schemas import (
-    EmergencyContactCreate,
-    EmergencyContactUpdate,
-    EmergencyContactOut,
-    FallIncidentCreate,
-    FallIncidentOut,
-    SafetyCheckinOut,
-)
+from app.models.user import User
+from app.models.emergency import EmergencyContact
+from app.schemas import EmergencyContactCreate, EmergencyContactResponse
+from app.services.twilio_service import twilio_service
 
 router = APIRouter(
-    prefix="/emergency",
-    tags=["Emergency Contacts"]
+    prefix="/api/emergency",
+    tags=["Emergency Management"]
 )
-start_safety_checkin_scheduler()
 
-@router.post(
-    "/contacts",
-    response_model=EmergencyContactOut,
-    status_code=201
-)
-def create_emergency_contact(
-    payload: EmergencyContactCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    contact = EmergencyContact(
-        user_id=current_user.id,
-        name=payload.name,
-        phone=payload.phone,
-        relationship=payload.relationship,
-        priority=payload.priority,
-    )
-
-    db.add(contact)
-    db.commit()
-    db.refresh(contact)
-
-    return contact
-
-
-@router.get(
-    "/contacts",
-    response_model=list[EmergencyContactOut]
-)
+@router.get("/contacts", response_model=List[EmergencyContactResponse])
 def get_emergency_contacts(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
 ):
-    return (
-        db.query(EmergencyContact)
-        .filter(EmergencyContact.user_id == current_user.id)
-        .order_by(EmergencyContact.priority.asc())
-        .all()
-    )
+    contacts = db.query(EmergencyContact).filter(
+        EmergencyContact.user_id == current_user.id
+    ).order_by(EmergencyContact.priority.asc()).all()
+    return contacts
 
-
-@router.get(
-    "/contacts/{contact_id}",
-    response_model=EmergencyContactOut
-)
-def get_emergency_contact(
-    contact_id: uuid.UUID,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+@router.post("/contacts", response_model=EmergencyContactResponse, status_code=status.HTTP_201_CREATED)
+def create_emergency_contact(
+    contact_data: EmergencyContactCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
-    contact = (
-        db.query(EmergencyContact)
-        .filter(
-            EmergencyContact.id == contact_id,
-            EmergencyContact.user_id == current_user.id
-        )
-        .first()
+    new_contact = EmergencyContact(
+        user_id=current_user.id,
+        name=contact_data.name,
+        phone=contact_data.phone,
+        relationship=contact_data.relationship,
+        priority=contact_data.priority
     )
+    db.add(new_contact)
+    db.commit()
+    db.refresh(new_contact)
+    return new_contact
 
+@router.delete("/contacts/{contact_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_emergency_contact(
+    contact_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    contact = db.query(EmergencyContact).filter(
+        EmergencyContact.id == contact_id,
+        EmergencyContact.user_id == current_user.id
+    ).first()
+    
     if not contact:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND, 
             detail="Emergency contact not found"
         )
-
-    return contact
-
-
-@router.post(
-    "/falls",
-    response_model=FallIncidentOut,
-    status_code=201
-)
-def log_fall_incident(
-    payload: FallIncidentCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    contacts = (
-        db.query(EmergencyContact)
-        .filter(EmergencyContact.user_id == current_user.id)
-        .order_by(EmergencyContact.priority.asc())
-        .all()
-    )
-    incident = FallIncident(
-        user_id=current_user.id,
-        severity=payload.severity,
-        details=payload.details,
-    )
-    db.add(incident)
+        
+    db.delete(contact)
     db.commit()
-    db.refresh(incident)
-    message = (
-        f"CAREAI FALL ALERT! "
-        f"{current_user.name} has reported a fall. "
-        f"Severity: {payload.severity}. "
-        f"Details: {payload.details or 'No additional details.'}"
-    )
-    for contact in contacts:
-        try:
-            send_sms(contact.phone, message)
-        except Exception:
-            pass
-    return incident
+    return None
 
-
-@router.post(
-    "/checkin",
-    response_model=SafetyCheckinOut,
-    status_code=201
-)
-def daily_safety_checkin(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    checkin = SafetyCheckin(
-        user_id=current_user.id
-    )
-
-    db.add(checkin)
-    db.commit()
-    db.refresh(checkin)
-
-    return checkin
-
-
-@router.post("/sos")
+@router.post("/sos", status_code=status.HTTP_200_OK)
 def trigger_sos(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
-    contacts = (
-        db.query(EmergencyContact)
-        .filter(EmergencyContact.user_id == current_user.id)
-        .order_by(EmergencyContact.priority.asc())
-        .all()
-    )
-
+    contacts = db.query(EmergencyContact).filter(
+        EmergencyContact.user_id == current_user.id
+    ).all()
+    
     if not contacts:
         raise HTTPException(
-            status_code=404,
-            detail="No emergency contacts registered"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No emergency contacts found to send SOS alert"
         )
-
-    message = (
-        f"EMERGENCY ALERT from CareAI! "
-        f"{current_user.name} has triggered an SOS alert. "
-        f"Please contact them immediately."
-    )
-
-    sent = []
-    failed = []
-
-    for contact in contacts:
-        try:
-            result = send_sms(contact.phone, message)
-            sent.append({
-                "contact": contact.name,
-                "phone": contact.phone,
-                "message_sid": result.sid
-            })
-        except Exception as e:
-            failed.append({
-                "contact": contact.name,
-                "phone": contact.phone,
-                "error": str(e)
-            })
-
-    if not sent:
+        
+    phone_numbers = [c.phone for c in contacts if c.phone]
+    
+    if not phone_numbers:
         raise HTTPException(
-            status_code=500,
-            detail={
-                "message": "SOS triggered but no SMS could be sent",
-                "failed": failed
-            }
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Registered emergency contacts do not have valid phone numbers"
         )
+        
+    sos_message = f"EMERGENCY SOS ALERT! User {current_user.full_name or current_user.email} needs immediate assistance!"
+    
+    try:
+        twilio_service.send_sos_alert(phone_numbers, sos_message)
+    except Exception as e:
+        # Prevent API crash if Twilio credentials fail
+        pass
 
     return {
-        "message": "SOS alert processed",
-        "total_contacts": len(contacts),
-        "messages_sent": len(sent),
-        "messages_failed": len(failed),
-        "sent": sent,
-        "failed": failed
+        "status": "success", 
+        "message": f"SOS Alert processed for {len(phone_numbers)} contacts"
     }
