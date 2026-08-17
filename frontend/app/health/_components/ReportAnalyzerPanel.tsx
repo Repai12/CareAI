@@ -58,6 +58,20 @@ export default function ReportAnalyzerPanel({
                 <span className="font-medium text-ink text-sm">{r.filename}</span>
                 <span className="text-ink/40 text-xs">{new Date(r.created_at).toLocaleDateString()}</span>
               </div>
+              {r.flagged_values.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2 mb-1">
+                  {r.flagged_values.map((f, i) => (
+                    <span
+                      key={i}
+                      className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                        f.status === "high" ? "bg-alert text-white" : f.status === "low" ? "bg-gold text-white" : "bg-sageLight text-sage"
+                      }`}
+                    >
+                      {f.label}: {f.value} — {f.status.toUpperCase()}
+                    </span>
+                  ))}
+                </div>
+              )}
               <p className="text-ink/70 text-sm mt-1 whitespace-pre-wrap">{r.ai_summary}</p>
             </li>
           ))}
