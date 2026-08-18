@@ -17,12 +17,14 @@ export default function MedicationsCard({ medications }: { medications: Medicati
           {medications.map((m) => (
             <li key={m.id} className="py-3 flex items-center justify-between">
               <div>
-                <p className="font-medium text-ink">{m.name}</p>
+                <p className="font-medium text-ink">{m.medicine_name}</p>
                 <p className="text-sm text-ink/50">{m.dosage} · {m.frequency}</p>
               </div>
-              <span className="text-xs text-sage bg-sageLight rounded-full px-3 py-1">
-                {m.schedule_time}
-              </span>
+              {m.end_date && (
+                <span className="text-xs text-sage bg-sageLight rounded-full px-3 py-1">
+                  until {m.end_date}
+                </span>
+              )}
             </li>
           ))}
         </ul>

@@ -1,99 +1,158 @@
 "use client";
 
-import { useState } from "react";
-import { StatStrip } from "@/components/StatStrip";
-import { VitalsCard } from "@/components/VitalsCard";
-import { MedicationsCard } from "@/components/MedicationsCard";
-import { AppointmentsCard } from "@/components/AppointmentsCard";
-import { AISummaryPanel } from "@/components/AISummaryPanel";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
+import { DashboardResponse, WeeklyReportOut, getDashboard, getReportHistory, apiFetch } from "@/lib/api";
+import VitalsCard from "@/components/VitalsCard";
+import MedicationsCard from "@/components/MedicationsCard";
+import AppointmentsCard from "@/components/AppointmentsCard";
+import ReportPanel from "@/components/ReportPanel";
+import StatStrip from "@/components/StatStrip";
+import StatusBadge from "@/components/StatusBadge";
+import AISummaryPanel from "@/components/AISummaryPanel";
+import LogoutButton from "@/components/LogoutButton";
 
-export default function PatientDashboard({ params }: { params: { patientId: string } }) {
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+function initials(name: string) {
+  return name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+}
 
-  // Trigger SOS Alert via Twilio
-  const handleSOS = async () => {
+function getMyRole(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("careai_role");
+}
+
+export default function DashboardPage() {
+  const params = useParams<{ patientId: string }>();
+  const patientId = params.patientId;
+
+  const [data, setData] = useState<DashboardResponse | null>(null);
+  const [reportHistory, setReportHistory] = useState<WeeklyReportOut[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
+  const [sosLoading, setSosLoading] = useState(false);
+  const [sosMessage, setSosMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    setRole(getMyRole());
+    if (!patientId) return;
+
+    Promise.all([getDashboard(patientId), getReportHistory(patientId)])
+      .then(([dashboard, history]) => {
+        setData(dashboard);
+        setReportHistory(history);
+      })
+      .catch((e) => setError(e.message));
+  }, [patientId]);
+
+  async function handleSOS() {
     if (!confirm("Are you sure you want to trigger an Emergency SOS Alert?")) return;
-    setLoading(true);
-    setMessage(null);
+    setSosLoading(true);
+    setSosMessage(null);
     try {
-      const res = await fetch("/api/emergency/sos", { method: "POST" });
-      const data = await res.json();
-      if (res.ok) {
-        setMessage("🚨 SOS Alert successfully sent to emergency contacts!");
-      } else {
-        setMessage(`❌ SOS Failed: ${data.detail || "Error triggering alert"}`);
-      }
-    } catch (err) {
-      setMessage("❌ Failed to connect to server for SOS Alert.");
+      const res = await apiFetch("/api/emergency/sos", { method: "POST" });
+      setSosMessage(`SOS Alert sent: ${res.message || "processed"}`);
+    } catch (e: any) {
+      setSosMessage(`SOS failed: ${e.message || "could not trigger alert"}`);
     } finally {
-      setLoading(false);
+      setSosLoading(false);
     }
-  };
+  }
 
-  // Trigger Daily Safety Check-in
-  const handleCheckin = async () => {
-    setLoading(true);
-    setMessage(null);
-    try {
-      const res = await fetch("/api/emergency/checkin", { method: "POST" });
-      if (res.ok) {
-        setMessage("✅ Daily Safety Check-in completed successfully!");
-      } else {
-        setMessage("❌ Check-in failed. Please try again.");
-      }
-    } catch (err) {
-      setMessage("❌ Network error while sending check-in.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (error) {
+    return (
+      <main className="min-h-screen flex items-center justify-center">
+        <p className="text-alert">{error}</p>
+      </main>
+    );
+  }
+
+  if (!data) {
+    return (
+      <main className="min-h-screen flex items-center justify-center">
+        <p className="text-ink/50">Loading dashboard...</p>
+      </main>
+    );
+  }
+
+  const reportsSentThisWeek = reportHistory.filter((r) => {
+    const sentAt = new Date(r.sent_at);
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return sentAt >= weekAgo;
+  }).length;
+
+  const roleLabel = role === "patient" ? "Your Dashboard" : role === "doctor" ? "Viewing as Doctor" : role === "family" ? "Viewing as Family" : "";
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      {/* Top Banner Message */}
-      {message && (
-        <div className="p-4 bg-blue-50 border border-blue-200 text-blue-800 rounded-lg text-center font-medium shadow-sm">
-          {message}
+    <main className="min-h-screen px-6 py-10 max-w-5xl mx-auto">
+      <header className="mb-8 flex items-start justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-sage text-white flex items-center justify-center text-lg font-display font-semibold shrink-0">
+            {initials(data.patient.name)}
+          </div>
+          <div>
+            <p className="text-sm text-sage font-medium">CareAI · {roleLabel}</p>
+            <h1 className="text-3xl font-display font-bold text-ink mt-0.5">{data.patient.name}</h1>
+            <p className="text-ink/50 text-sm">{data.patient.email}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link
+            href={`/health/${patientId}`}
+            className="text-xs font-medium text-sage border border-sageLight rounded-full px-3 py-1.5 hover:bg-sageLight transition"
+          >
+            Health Module
+          </Link>
+          <Link
+            href={`/medications/${patientId}`}
+            className="text-xs font-medium text-sage border border-sageLight rounded-full px-3 py-1.5 hover:bg-sageLight transition"
+          >
+            Medications &amp; Appointments
+          </Link>
+          <Link
+            href={`/notifications/${patientId}`}
+            className="text-xs font-medium text-sage border border-sageLight rounded-full px-3 py-1.5 hover:bg-sageLight transition"
+          >
+            Notifications
+          </Link>
+          <StatusBadge vitals={data.latest_vitals} />
+          <LogoutButton />
+        </div>
+      </header>
+
+      {sosMessage && (
+        <div className="mb-6 p-3 bg-alert/10 border border-alert/30 text-alert rounded-lg text-sm font-medium">
+          {sosMessage}
         </div>
       )}
 
-      {/* Member-3 Emergency & Safety Control Panel */}
-      <div className="bg-white p-6 rounded-xl border border-red-100 shadow-sm space-y-4">
-        <h2 className="text-xl font-bold text-gray-800 border-b pb-2">
-          🚨 Emergency & Safety Actions (Member-3 Features)
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* One-Tap SOS Button */}
+      {role === "patient" && (
+        <div className="mb-6">
           <button
             onClick={handleSOS}
-            disabled={loading}
-            className="w-full bg-red-600 hover:bg-red-700 active:scale-95 text-white font-extrabold py-4 px-6 rounded-xl shadow-md transition-all text-lg flex items-center justify-center gap-2"
+            disabled={sosLoading}
+            className="bg-alert text-white font-bold py-3 px-6 rounded-xl shadow-sm hover:opacity-90 disabled:opacity-50 transition"
           >
-            🚨 TRIGGER SOS ALERT
-          </button>
-
-          {/* Daily Safety Check-in Button */}
-          <button
-            onClick={handleCheckin}
-            disabled={loading}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold py-4 px-6 rounded-xl shadow-md transition-all text-lg flex items-center justify-center gap-2"
-          >
-            ✅ DAILY SAFETY CHECK-IN
+            {sosLoading ? "Sending..." : "🚨 Trigger Emergency SOS"}
           </button>
         </div>
+      )}
+
+      <StatStrip
+        vitals={data.latest_vitals}
+        medications={data.active_medications}
+        appointments={data.upcoming_appointments}
+        reportsSentThisWeek={reportsSentThisWeek}
+      />
+
+      <div className="grid md:grid-cols-2 gap-6">
+        <VitalsCard vitals={data.latest_vitals} />
+        <MedicationsCard medications={data.active_medications} />
+        <AppointmentsCard appointments={data.upcoming_appointments} />
+        <ReportPanel patientId={patientId} initialHistory={reportHistory} />
+        {role === "doctor" && <AISummaryPanel patientId={patientId} />}
       </div>
-
-      {/* Standard Dashboard Components */}
-      <StatStrip patientId={params.patientId} />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <VitalsCard patientId={params.patientId} />
-        <MedicationsCard patientId={params.patientId} />
-        <AppointmentsCard patientId={params.patientId} />
-      </div>
-
-      <AISummaryPanel patientId={params.patientId} />
-    </div>
+    </main>
   );
 }

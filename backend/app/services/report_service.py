@@ -27,11 +27,11 @@ def _build_summary_html(patient: User, vitals: list[VitalsLog], meds: list[Medic
     ) or "<tr><td colspan='5'>No vitals logged this week</td></tr>"
 
     meds_rows = "".join(
-        f"<li>{m.name} - {m.dosage} ({m.frequency})</li>" for m in meds
+        f"<li>{m.medicine_name} - {m.dosage} ({m.frequency})</li>" for m in meds
     ) or "<li>No active medications</li>"
 
     appt_rows = "".join(
-        f"<li>{a.doctor_name} on {a.scheduled_at.strftime('%d %b %Y, %H:%M')}</li>" for a in appts
+        f"<li>{a.doctor_name} on {a.appointment_date.strftime('%d %b %Y')} at {a.start_time.strftime('%H:%M')}</li>" for a in appts
     ) or "<li>No upcoming appointments</li>"
 
     return f"""
@@ -62,14 +62,13 @@ def generate_weekly_report(db: Session, patient_id) -> list[EmailLog]:
         .order_by(VitalsLog.logged_at)
         .all()
     )
-    meds = (
-        db.query(Medication)
-        .filter(Medication.patient_id == patient_id, Medication.active == True)  # noqa: E712
-        .all()
-    )
+    # Medications have no patient linkage in the current schema (Afifa's
+    # migration dropped patient_id/active) - omit rather than send another
+    # patient's medications in this patient's weekly report.
+    meds = []
     appts = (
         db.query(Appointment)
-        .filter(Appointment.patient_id == patient_id, Appointment.scheduled_at >= datetime.utcnow())
+        .filter(Appointment.patient_email == patient.email, Appointment.appointment_date >= datetime.utcnow().date())
         .all()
     )
 

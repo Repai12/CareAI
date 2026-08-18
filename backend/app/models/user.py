@@ -43,8 +43,10 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     vitals = relationship("VitalsLog", back_populates="patient", cascade="all, delete-orphan")
-    medications = relationship("Medication", back_populates="patient", cascade="all, delete-orphan")
-    appointments = relationship("Appointment", back_populates="patient", cascade="all, delete-orphan")
+    # medications/appointments are no longer linked via patient_id (Afifa's
+    # migration 5c905c544fa2 replaced that FK with patient_name/patient_email
+    # on appointments and dropped it entirely from medications) - no
+    # relationship() possible here without a matching FK on the other side.
 
     emergency_contacts = relationship(
     "EmergencyContact",

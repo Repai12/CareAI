@@ -11,6 +11,7 @@ share across concurrent threads, so each parallel query gets its own).
 
 import asyncio
 import uuid
+from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -21,7 +22,7 @@ from app.database import get_db, SessionLocal
 from app.auth import get_current_user
 from app.models.user import User, UserRole, PatientLink
 from app.models.vitals import VitalsLog
-from app.models.medication import Medication, Appointment, AppointmentStatus
+from app.models.medication import Medication, Appointment
 from app.schemas import DashboardResponse
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
@@ -56,27 +57,24 @@ def _fetch_latest_vitals(patient_id: uuid.UUID):
 
 
 def _fetch_active_medications(patient_id: uuid.UUID):
-    db = SessionLocal()
-    try:
-        return (
-            db.query(Medication)
-            .filter(Medication.patient_id == patient_id, Medication.active == True)  # noqa: E712
-            .all()
-        )
-    finally:
-        db.close()
+    # NOTE: Afifa's migration (5c905c544fa2) dropped patient_id/active from
+    # medications entirely - there's currently no column linking a
+    # medication row to a specific patient. Returning an empty list rather
+    # than guessing/leaking another patient's medications; revisit once
+    # medications have a real patient linkage again.
+    return []
 
 
-def _fetch_upcoming_appointments(patient_id: uuid.UUID):
+def _fetch_upcoming_appointments(patient_email: str):
     db = SessionLocal()
     try:
         return (
             db.query(Appointment)
             .filter(
-                Appointment.patient_id == patient_id,
-                Appointment.status == AppointmentStatus.upcoming.value,
+                Appointment.patient_email == patient_email,
+                Appointment.appointment_date >= date.today(),
             )
-            .order_by(Appointment.scheduled_at)
+            .order_by(Appointment.appointment_date, Appointment.start_time)
             .limit(3)  # "next 3 upcoming appointments" per spec
             .all()
         )
@@ -101,7 +99,7 @@ async def get_patient_dashboard(
     latest_vitals, active_medications, upcoming_appointments = await asyncio.gather(
         to_thread.run_sync(_fetch_latest_vitals, patient_id),
         to_thread.run_sync(_fetch_active_medications, patient_id),
-        to_thread.run_sync(_fetch_upcoming_appointments, patient_id),
+        to_thread.run_sync(_fetch_upcoming_appointments, patient.email),
     )
 
     return DashboardResponse(

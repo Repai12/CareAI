@@ -17,17 +17,18 @@ export interface VitalsOut {
 
 export interface MedicationOut {
   id: string;
-  name: string;
+  medicine_name: string;
   dosage: string;
   frequency: string;
-  schedule_time: string;
-  active: boolean;
+  start_date: string | null;
+  end_date: string | null;
 }
 
 export interface AppointmentOut {
   id: string;
   doctor_name: string;
-  scheduled_at: string;
+  appointment_date: string;
+  start_time: string;
   location: string | null;
   status: string;
 }
