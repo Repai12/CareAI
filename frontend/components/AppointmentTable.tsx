@@ -7,6 +7,7 @@ interface AppointmentTableProps {
   loading: boolean;
   onEdit: (appointment: Appointment) => void;
   onDelete: (id: string) => void;
+  readOnly?: boolean;
 }
 
 export default function AppointmentTable({
@@ -14,6 +15,7 @@ export default function AppointmentTable({
   loading,
   onEdit,
   onDelete,
+  readOnly = false,
 }: AppointmentTableProps) {
   if (loading) {
     return (
@@ -74,9 +76,11 @@ export default function AppointmentTable({
                   Status
                 </th>
 
-                <th className="text-center px-4 py-3 border-b">
-                  Actions
-                </th>
+                {!readOnly && (
+                  <th className="text-center px-4 py-3 border-b">
+                    Actions
+                  </th>
+                )}
               </tr>
             </thead>
 
@@ -122,29 +126,31 @@ export default function AppointmentTable({
                     </span>
                   </td>
 
-                  <td className="px-4 py-3 border-b">
-                    <div className="flex justify-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          onEdit(appointment)
-                        }
-                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-md text-sm"
-                      >
-                        Edit
-                      </button>
+                  {!readOnly && (
+                    <td className="px-4 py-3 border-b">
+                      <div className="flex justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onEdit(appointment)
+                          }
+                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-md text-sm"
+                        >
+                          Edit
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={() =>
-                          onDelete(appointment.id)
-                        }
-                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </td>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onDelete(appointment.id)
+                          }
+                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

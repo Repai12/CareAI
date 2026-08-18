@@ -278,7 +278,7 @@ class MedicationBase(BaseModel):
 
 
 class MedicationCreate(MedicationBase):
-    pass
+    patient_id: UUID
 
 
 class MedicationUpdate(BaseModel):
@@ -291,6 +291,7 @@ class MedicationUpdate(BaseModel):
 
 class MedicationResponse(MedicationBase):
     id: UUID
+    patient_id: Optional[UUID] = None
 
     model_config = ConfigDict(from_attributes=True)
 

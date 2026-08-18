@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -194,7 +195,7 @@ def get_medication_logs(
     response_model=list[MedicationLogResponse]
 )
 def get_medication_logs_for_medication(
-    medication_id: int,
+    medication_id: UUID,
     db: Session = Depends(get_db)
 ):
 
@@ -365,7 +366,7 @@ def mark_medication_missed(
     response_model=MedicationAdherenceResponse
 )
 def get_medication_adherence(
-    medication_id: int,
+    medication_id: UUID,
     db: Session = Depends(get_db)
 ):
 
