@@ -86,7 +86,7 @@ def trigger_sos(
             detail="Registered emergency contacts do not have valid phone numbers"
         )
         
-    sos_message = f"EMERGENCY SOS ALERT! User {current_user.full_name or current_user.email} needs immediate assistance!"
+    sos_message = f"EMERGENCY SOS ALERT! User {current_user.name or current_user.email} needs immediate assistance!"
     
     try:
         twilio_service.send_sos_alert(phone_numbers, sos_message)

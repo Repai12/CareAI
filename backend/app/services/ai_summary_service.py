@@ -55,19 +55,23 @@ def _check_rate_limit(patient_id) -> None:
     _last_call_at[str(patient_id)] = time.time()
 
 
-def _gather_recent_logs(db: Session, patient_id) -> dict:
+def _gather_recent_logs(db: Session, patient: User) -> dict:
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
 
     vitals = (
         db.query(VitalsLog)
-        .filter(VitalsLog.patient_id == patient_id, VitalsLog.logged_at >= thirty_days_ago)
+        .filter(VitalsLog.patient_id == patient.id, VitalsLog.logged_at >= thirty_days_ago)
         .order_by(VitalsLog.logged_at)
         .all()
     )
-    meds = db.query(Medication).filter(Medication.patient_id == patient_id, Medication.active == True).all()  # noqa: E712
+    # Medications no longer have a patient linkage in the DB (Afifa's
+    # migration 5c905c544fa2 dropped patient_id/active) - can't scope this
+    # per-patient right now, so omit rather than leak other patients' meds
+    # into a doctor's summary email.
+    meds = []
     appts = (
         db.query(Appointment)
-        .filter(Appointment.patient_id == patient_id, Appointment.scheduled_at >= thirty_days_ago)
+        .filter(Appointment.patient_email == patient.email, Appointment.appointment_date >= thirty_days_ago.date())
         .all()
     )
     return {"vitals": vitals, "medications": meds, "appointments": appts}
@@ -82,9 +86,9 @@ def _format_raw_logs_html(patient: User, logs: dict) -> str:
         for v in logs["vitals"]
     ) or "<tr><td colspan='5'>No vitals logged in the last 30 days</td></tr>"
 
-    meds_rows = "".join(f"<li>{m.name} - {m.dosage} ({m.frequency})</li>" for m in logs["medications"]) or "<li>None</li>"
+    meds_rows = "".join(f"<li>{m.medicine_name} - {m.dosage} ({m.frequency})</li>" for m in logs["medications"]) or "<li>None</li>"
     appt_rows = "".join(
-        f"<li>{a.doctor_name} on {a.scheduled_at.strftime('%d %b %Y')}</li>" for a in logs["appointments"]
+        f"<li>{a.doctor_name} on {a.appointment_date.strftime('%d %b %Y')}</li>" for a in logs["appointments"]
     ) or "<li>None</li>"
 
     return f"""
@@ -117,7 +121,7 @@ def generate_doctor_ai_summary(db: Session, patient_id, requesting_doctor: User)
     if not patient:
         raise ValueError("Patient not found")
 
-    logs = _gather_recent_logs(db, patient_id)
+    logs = _gather_recent_logs(db, patient)
     raw_html = _format_raw_logs_html(patient, logs)
 
     summary_html: str

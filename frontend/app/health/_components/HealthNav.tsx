@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ClipboardIcon, DocumentSearchIcon, StethoscopeIcon, LeafIcon } from "./icons";
+import LogoutButton from "@/components/LogoutButton";
 
 const TABS = [
   { segment: "", label: "Overview", icon: null },
@@ -34,6 +35,9 @@ export default function HealthNav({ patientId, current }: { patientId: string; c
           </Link>
         );
       })}
+      <div className="ml-auto">
+        <LogoutButton />
+      </div>
     </nav>
   );
 }

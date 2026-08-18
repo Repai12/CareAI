@@ -21,7 +21,7 @@ export default function AppointmentsCard({ appointments }: { appointments: Appoi
                 <p className="text-sm text-ink/50">{a.location || "Location TBD"}</p>
               </div>
               <p className="text-sm text-ink/60">
-                {new Date(a.scheduled_at).toLocaleString()}
+                {a.appointment_date} at {a.start_time}
               </p>
             </li>
           ))}

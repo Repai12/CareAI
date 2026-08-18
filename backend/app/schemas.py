@@ -95,11 +95,11 @@ class FlaggedValue(BaseModel):
 
 class MedicationOut(BaseModel):
     id: uuid.UUID
-    name: str
+    medicine_name: str
     dosage: str
     frequency: str
-    schedule_time: str
-    active: bool
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -111,7 +111,8 @@ class MedicationOut(BaseModel):
 class AppointmentOut(BaseModel):
     id: uuid.UUID
     doctor_name: str
-    scheduled_at: datetime
+    appointment_date: date
+    start_time: time
     location: Optional[str] = None
     status: str
 
@@ -272,8 +273,8 @@ class MedicationBase(BaseModel):
     medicine_name: str
     dosage: str
     frequency: str
-    start_date: date
-    end_date: date
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
 
 
 class MedicationCreate(MedicationBase):
@@ -360,7 +361,7 @@ class MedicationLogCreate(BaseModel):
 
 
 class MedicationLogResponse(MedicationLogBase):
-    id: UUID
+    id: int  # medication_logs.id is a plain autoincrement integer, not UUID
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -398,7 +399,7 @@ class VisitNoteUpdate(BaseModel):
 
 
 class VisitNoteResponse(VisitNoteBase):
-    id: UUID
+    id: int  # visit_notes.id is a plain autoincrement integer, not UUID
     status: str
     created_at: datetime
     updated_at: datetime

@@ -26,7 +26,7 @@ export default function StatStrip({
     },
     {
       label: "Next appointment",
-      value: nextAppt ? new Date(nextAppt.scheduled_at).toLocaleDateString() : "None",
+      value: nextAppt ? nextAppt.appointment_date : "None",
       accent: "text-gold",
     },
     {

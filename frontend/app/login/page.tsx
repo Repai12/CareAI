@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { login, getMyPatients } from "@/lib/api";
 
 type DemoRole = "patient" | "doctor" | "family";
@@ -96,6 +97,13 @@ export default function LoginPage() {
         >
           {loading ? "Signing in..." : "Sign in"}
         </button>
+
+        <p className="text-sm text-ink/50 text-center mt-4">
+          Don&apos;t have an account?{" "}
+          <Link href="/register" className="text-sage font-medium">
+            Sign up
+          </Link>
+        </p>
       </form>
     </main>
   );
