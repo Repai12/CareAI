@@ -10,9 +10,21 @@ import {
   AppointmentFormData,
 } from "../types/appointment";
 
+import {
+  VisitNote,
+  VisitNoteCreate,
+  VisitNoteUpdate,
+} from "../types/visitNote";
+
 
 const API_BASE_URL =
-  "http://127.0.0.1:8000";
+  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+
+function authHeaders() {
+  const token = typeof window !== "undefined" ? localStorage.getItem("careai_token") : null;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 
 // ============================================================
@@ -23,12 +35,13 @@ const MEDICATION_API =
   `${API_BASE_URL}/medications`;
 
 
-export const getMedications = async (): Promise<
-  Medication[]
-> => {
+export const getMedications = async (
+  patientId: string
+): Promise<Medication[]> => {
 
   const response = await axios.get(
-    `${MEDICATION_API}/`
+    `${MEDICATION_API}/patient/${patientId}`,
+    { headers: authHeaders() }
   );
 
   return response.data;
@@ -36,12 +49,14 @@ export const getMedications = async (): Promise<
 
 
 export const addMedication = async (
+  patientId: string,
   data: MedicationFormData
 ): Promise<Medication> => {
 
   const response = await axios.post(
     `${MEDICATION_API}/`,
-    data
+    { ...data, patient_id: patientId },
+    { headers: authHeaders() }
   );
 
   return response.data;
@@ -55,7 +70,8 @@ export const updateMedication = async (
 
   const response = await axios.put(
     `${MEDICATION_API}/${id}`,
-    data
+    data,
+    { headers: authHeaders() }
   );
 
   return response.data;
@@ -67,7 +83,8 @@ export const deleteMedication = async (
 ): Promise<void> => {
 
   await axios.delete(
-    `${MEDICATION_API}/${id}`
+    `${MEDICATION_API}/${id}`,
+    { headers: authHeaders() }
   );
 };
 
@@ -80,12 +97,13 @@ const APPOINTMENT_API =
   `${API_BASE_URL}/appointments`;
 
 
-export const getAppointments = async (): Promise<
-  Appointment[]
-> => {
+export const getAppointments = async (
+  patientId: string
+): Promise<Appointment[]> => {
 
   const response = await axios.get(
-    `${APPOINTMENT_API}/`
+    `${APPOINTMENT_API}/patient/${patientId}`,
+    { headers: authHeaders() }
   );
 
   return response.data;
@@ -98,7 +116,8 @@ export const addAppointment = async (
 
   const response = await axios.post(
     `${APPOINTMENT_API}/`,
-    data
+    data,
+    { headers: authHeaders() }
   );
 
   return response.data;
@@ -112,7 +131,8 @@ export const updateAppointment = async (
 
   const response = await axios.put(
     `${APPOINTMENT_API}/${id}`,
-    data
+    data,
+    { headers: authHeaders() }
   );
 
   return response.data;
@@ -124,6 +144,60 @@ export const deleteAppointment = async (
 ): Promise<void> => {
 
   await axios.delete(
-    `${APPOINTMENT_API}/${id}`
+    `${APPOINTMENT_API}/${id}`,
+    { headers: authHeaders() }
   );
+};
+
+
+// ============================================================
+// VISIT NOTES API
+// ============================================================
+
+const VISIT_NOTE_API =
+  `${API_BASE_URL}/visit-notes`;
+
+
+export const getVisitNotes = async (
+  patientName?: string
+): Promise<VisitNote[]> => {
+
+  const response = await axios.get(
+    `${VISIT_NOTE_API}/`,
+    {
+      params: patientName ? { patient_name: patientName } : {},
+      headers: authHeaders(),
+    }
+  );
+
+  return response.data;
+};
+
+
+export const addVisitNote = async (
+  data: VisitNoteCreate
+): Promise<VisitNote> => {
+
+  const response = await axios.post(
+    `${VISIT_NOTE_API}/`,
+    data,
+    { headers: authHeaders() }
+  );
+
+  return response.data;
+};
+
+
+export const updateVisitNote = async (
+  id: number,
+  data: VisitNoteUpdate
+): Promise<VisitNote> => {
+
+  const response = await axios.put(
+    `${VISIT_NOTE_API}/${id}`,
+    data,
+    { headers: authHeaders() }
+  );
+
+  return response.data;
 };

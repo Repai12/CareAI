@@ -1,6 +1,7 @@
 from datetime import datetime, timezone, timedelta
 from uuid import UUID
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from . import models
@@ -36,6 +37,7 @@ def create_medication(
     medication: schemas.MedicationCreate
 ):
     db_medication = models.Medication(
+        patient_id=medication.patient_id,
         medicine_name=medication.medicine_name,
         dosage=medication.dosage,
         frequency=medication.frequency,
@@ -51,10 +53,16 @@ def create_medication(
 
 
 def get_medications(
-    db: Session
+    db: Session,
+    patient_id: UUID
 ):
+    # Both current and past medications - "previous medications" stay
+    # visible (nothing is deleted just because end_date has passed),
+    # scoped to one patient instead of returning everyone's list.
     return (
         db.query(models.Medication)
+        .filter(models.Medication.patient_id == patient_id)
+        .order_by(models.Medication.start_date.desc().nullslast())
         .all()
     )
 
@@ -91,7 +99,7 @@ def delete_medication(
 def update_medication(
     db: Session,
     medication_id: UUID,
-    medication: schemas.MedicationCreate
+    medication: schemas.MedicationUpdate
 ):
     db_medication = get_medication(
         db,
@@ -202,8 +210,16 @@ def create_appointment(
     )
 
     # ========================================================
-    # 4. CREATE GOOGLE CALENDAR EVENT
+    # 4. CREATE GOOGLE CALENDAR EVENT (best-effort)
     # ========================================================
+    #
+    # Google Calendar sync requires a credentials.json + completed
+    # OAuth flow (token.json) that isn't set up in this environment.
+    # Treat it the same way every other optional third-party
+    # integration in this codebase is treated (Twilio, Resend, Groq
+    # fallbacks) - log and continue rather than losing the appointment
+    # PostgreSQL is still the source of truth; google_event_id stays
+    # null until calendar sync is actually configured.
 
     try:
 
@@ -231,10 +247,6 @@ def create_appointment(
             location=appointment.location
         )
 
-        # ====================================================
-        # 5. SAVE GOOGLE EVENT ID
-        # ====================================================
-
         db_appointment.google_event_id = (
             google_event.get("id")
         )
@@ -243,28 +255,21 @@ def create_appointment(
         db.refresh(db_appointment)
 
     except Exception as e:
-
-        # Google Calendar failed.
-        # Remove the PostgreSQL appointment so that
-        # the two systems don't become inconsistent.
-
-        db.delete(db_appointment)
-        db.commit()
-
-        raise Exception(
-            "Appointment could not be synchronized "
-            "with Google Calendar: "
-            f"{str(e)}"
-        )
+        print(f"[Google Calendar] sync skipped: {e}")
 
     return db_appointment
 
 
 def get_appointments(
-    db: Session
+    db: Session,
+    patient_email: str | None = None
 ):
+    query = db.query(models.Appointment)
+    if patient_email:
+        query = query.filter(models.Appointment.patient_email == patient_email)
     return (
-        db.query(models.Appointment)
+        query
+        .order_by(models.Appointment.appointment_date.desc())
         .all()
     )
 
@@ -415,12 +420,7 @@ def update_appointment(
             )
 
         except Exception as e:
-
-            raise Exception(
-                "Appointment was updated in PostgreSQL, "
-                "but Google Calendar could not be updated: "
-                f"{str(e)}"
-            )
+            print(f"[Google Calendar] update sync skipped: {e}")
 
     return db_appointment
 
@@ -462,20 +462,21 @@ def delete_appointment(
             )
 
         except Exception as e:
-
-            raise Exception(
-                "Appointment could not be deleted "
-                "because the Google Calendar event "
-                "could not be deleted: "
-                f"{str(e)}"
-            )
+            print(f"[Google Calendar] delete sync skipped: {e}")
 
     # ========================================================
     # 4. DELETE FROM POSTGRESQL
     # ========================================================
 
-    db.delete(db_appointment)
-    db.commit()
+    try:
+        db.delete(db_appointment)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise ValueError(
+            "This appointment has a linked visit note and can't be "
+            "deleted until that note is removed or reassigned."
+        )
 
     return db_appointment
 

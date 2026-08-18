@@ -32,6 +32,15 @@ from app.routers import vitals as vitals_router
 from app.routers import emergency as emergency_router
 from app.routers import medications as medications_router
 
+# Member 2 (Afifa) - full CRUD implementation, previously never wired in
+# because it depended on a flat app/models.py that collided with the
+# app/models/ package everyone else uses. Now points at the package.
+from app.routes import router as afifa_medications_router
+from app.appointments import router as appointments_router
+from app.medication_logs import router as medication_logs_router
+from app.visit_notes import router as visit_notes_router
+from app.calendar import router as calendar_router
+
 from app.services.scheduler import start_scheduler
 
 Base.metadata.create_all(bind=engine)
@@ -62,6 +71,13 @@ app.include_router(dashboard.router)
 app.include_router(notifications.router)
 app.include_router(reports.router)
 app.include_router(ai_summary.router)
+
+# Member 2 (Afifa)
+app.include_router(afifa_medications_router)
+app.include_router(appointments_router)
+app.include_router(medication_logs_router)
+app.include_router(visit_notes_router)
+app.include_router(calendar_router)
 
 
 @app.on_event("startup")

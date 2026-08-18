@@ -2,7 +2,7 @@ export interface VisitNote {
   id: number;
   patient_name: string;
   doctor_name: string;
-  appointment_id: number | null;
+  appointment_id: string | null;
   visit_date: string;
   notes: string;
   prescription: string | null;
@@ -14,7 +14,7 @@ export interface VisitNote {
 export interface VisitNoteCreate {
   patient_name: string;
   doctor_name: string;
-  appointment_id?: number | null;
+  appointment_id?: string | null;
   visit_date: string;
   notes: string;
   prescription?: string | null;

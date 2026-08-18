@@ -7,7 +7,7 @@ interface VisitNoteFormProps {
   onCreated?: (note: VisitNoteCreate) => void;
   initialPatientName?: string;
   initialDoctorName?: string;
-  initialAppointmentId?: number | null;
+  initialAppointmentId?: string | null;
 }
 
 export default function VisitNoteForm({
@@ -67,9 +67,7 @@ export default function VisitNoteForm({
     const note: VisitNoteCreate = {
       patient_name: patientName.trim(),
       doctor_name: doctorName.trim(),
-      appointment_id: appointmentId
-        ? Number(appointmentId)
-        : null,
+      appointment_id: appointmentId || null,
       visit_date: visitDate,
       notes: notes.trim(),
       prescription: prescription.trim() || null,

@@ -126,14 +126,22 @@ def create_visit_note(
     response_model=list[VisitNoteResponse]
 )
 def get_visit_notes(
+    patient_name: str | None = None,
     db: Session = Depends(get_db)
 ):
 
-    visit_notes = (
+    query = (
         db.query(VisitNote)
         .filter(
             VisitNote.status == "active"
         )
+    )
+
+    if patient_name:
+        query = query.filter(VisitNote.patient_name == patient_name)
+
+    visit_notes = (
+        query
         .order_by(
             VisitNote.visit_date.desc(),
             VisitNote.created_at.desc()

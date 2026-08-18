@@ -7,6 +7,7 @@ interface MedicationTableProps {
   loading: boolean;
   onEdit: (medication: Medication) => void;
   onDelete: (id: string) => void;
+  readOnly?: boolean;
 }
 
 export default function MedicationTable({
@@ -14,6 +15,7 @@ export default function MedicationTable({
   loading,
   onEdit,
   onDelete,
+  readOnly = false,
 }: MedicationTableProps) {
   if (loading) {
     return (
@@ -59,7 +61,7 @@ export default function MedicationTable({
               <th className="border p-3">Frequency</th>
               <th className="border p-3">Start Date</th>
               <th className="border p-3">End Date</th>
-              <th className="border p-3">Actions</th>
+              {!readOnly && <th className="border p-3">Actions</th>}
             </tr>
           </thead>
 
@@ -93,25 +95,27 @@ export default function MedicationTable({
                   {medication.end_date ?? "—"}
                 </td>
 
-                <td className="border p-3">
-                  <div className="flex justify-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => onEdit(medication)}
-                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg"
-                    >
-                      Edit
-                    </button>
+                {!readOnly && (
+                  <td className="border p-3">
+                    <div className="flex justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onEdit(medication)}
+                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg"
+                      >
+                        Edit
+                      </button>
 
-                    <button
-                      type="button"
-                      onClick={() => onDelete(medication.id)}
-                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </td>
+                      <button
+                        type="button"
+                        onClick={() => onDelete(medication.id)}
+                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
