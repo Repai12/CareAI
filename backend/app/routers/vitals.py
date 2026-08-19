@@ -126,8 +126,35 @@ VALID_RANGES = {
     "temperature": (30, 45, "Temperature must be between 30 and 45 °C"),
 }
 
+# README S6.1: "silently accepting '999' as blood pressure isn't graceful
+# degradation, it's a broken feature" - systolic/diastolic get the same
+# physiological-range treatment as every other field, not just a free
+# string nobody checks.
+SYSTOLIC_RANGE = (60, 250)
+DIASTOLIC_RANGE = (30, 150)
+
+
+def _validate_blood_pressure(bp: str | None):
+    if bp is None:
+        return
+    parts = bp.split("/")
+    if len(parts) != 2:
+        raise HTTPException(422, "Blood pressure must be in the form 'systolic/diastolic', e.g. 120/80")
+    try:
+        systolic, diastolic = int(parts[0]), int(parts[1])
+    except ValueError:
+        raise HTTPException(422, "Blood pressure must be two whole numbers, e.g. 120/80")
+
+    if not (SYSTOLIC_RANGE[0] <= systolic <= SYSTOLIC_RANGE[1]):
+        raise HTTPException(422, f"Systolic must be between {SYSTOLIC_RANGE[0]} and {SYSTOLIC_RANGE[1]}")
+    if not (DIASTOLIC_RANGE[0] <= diastolic <= DIASTOLIC_RANGE[1]):
+        raise HTTPException(422, f"Diastolic must be between {DIASTOLIC_RANGE[0]} and {DIASTOLIC_RANGE[1]}")
+    if diastolic >= systolic:
+        raise HTTPException(422, "Diastolic pressure must be lower than systolic")
+
 
 def _validate_ranges(payload):
+    _validate_blood_pressure(getattr(payload, "blood_pressure", None))
     for field, (lo, hi, message) in VALID_RANGES.items():
         value = getattr(payload, field, None)
         if value is not None and not (lo <= value <= hi):
