@@ -98,6 +98,14 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          {role !== "patient" && (
+            <Link
+              href="/patients"
+              className="text-xs font-medium text-sage border border-sageLight rounded-full px-3 py-1.5 hover:bg-sageLight transition"
+            >
+              My Patients
+            </Link>
+          )}
           <Link
             href={`/health/${patientId}`}
             className="text-xs font-medium text-sage border border-sageLight rounded-full px-3 py-1.5 hover:bg-sageLight transition"
