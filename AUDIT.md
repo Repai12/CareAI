@@ -44,12 +44,31 @@ description of what happened. Staging file-by-file (no wildcards) going forward 
    nuance from README S8.4, and frontend for both. Also fixed the login page's demo-account
    quick-select buttons, which still pointed at pre-rewrite seed emails and silently failed.
 
-**Not yet done** — still open per the fix order below: a feature-by-feature real-user pass across the
-AI features (symptom checker, diet advisor, report analyzer — currently believed working but not yet
-re-verified against corner cases the way everything else has been), frontend route restructuring
-(`/patient/*`, `/family/*`, `/doctor/*`), visual/interaction polish. Google Calendar OAuth is wired in
-but unverified beyond "doesn't crash the app" — nobody has real Google Cloud OAuth credentials to test
-the actual flow against.
+7. **Vitals real-user pass** (`2e6cc23`) — `blood_pressure` had zero validation (the one field README
+   S6.1 explicitly calls out by name: "silently accepting '999' as blood pressure isn't graceful
+   degradation, it's a broken feature"). Now rejects bad format/range/diastolic-over-systolic before
+   the row is written. The rest of Module 1 (vitals CRUD, AI report analyzer, symptom checker, diet
+   advisor) was already genuinely solid — real timeouts, graceful AI-failure fallbacks, real
+   validation elsewhere — no rewrite needed.
+8. **AI disclaimers + urgent-symptom prompt** (`b7c060e`) — README requires "AI-generated, not a
+   diagnosis" on every AI-output panel and a visible "this may be urgent" prompt on
+   urgent/emergency symptom results; neither existed anywhere in the frontend (confirmed by grep).
+   Added both.
+9. **Patient list/switcher** (`fbb7900`) — a structural gap, not a bug: `care_links` is genuinely
+   many-to-many, but the frontend had no way for a family member or doctor linked to more than one
+   patient to ever see or reach the second one — login just redirected to `patients[0]` and stopped.
+   Invisible in all testing until now because every demo account only had one linked patient. Added
+   a real `/patients` list page and a switcher link.
+10. **Safety page** (`4e7a258`) — the single most load-bearing corner case in the app (SOS is useless
+    with zero emergency contacts) had no frontend to add a contact at all. Same for the Fall Logger
+    and Daily Check-in, both working on the backend since commit `385ca49` but with zero UI. Built
+    `/safety/[patientId]` covering all three.
+
+**Not yet done**: frontend route restructuring (`/patient/*`, `/family/*`, `/doctor/*` — the current
+shared-page-with-role-checks approach works correctly, this is organizational/cosmetic, not a
+functional gap), visual/interaction polish pass. Google Calendar OAuth is wired in but unverified
+beyond "doesn't crash the app" — nobody has real Google Cloud OAuth credentials to test the actual
+flow against.
 
 ---
 
