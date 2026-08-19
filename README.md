@@ -43,39 +43,88 @@ We intentionally avoided heavy computer-vision AI (fall detection from video, fo
 | Repai Ul Islam | 23101084 |
  
 Each team member owns a complete vertical slice of features — database schema, backend endpoints, and frontend UI — across the project's three modules.
- 
-main
-## Getting Started
 
-First, run the development server:
+## Getting Started (local setup, from a fresh clone)
+
+Follow these steps in order. They assume **Python 3.11 or 3.12** (not 3.13+ — some pinned backend dependencies don't yet ship prebuilt wheels for newer Pythons, which means pip tries to compile them from source and fails unless you have a Rust/C++ toolchain installed), Node 18+, and git.
+
+### 1. Clone and enter the repo
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/Repai12/CareAI.git
+cd CareAI
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Backend setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cd backend
+python -m venv venv
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+If your default `python` is 3.13+, create the venv with a specific version instead, e.g. `py -3.12 -m venv venv` (Windows) or `python3.12 -m venv venv` (macOS/Linux).
 
-## Learn More
+Activate the virtual environment:
+- macOS/Linux: `source venv/bin/activate`
+- Windows (PowerShell): `venv\Scripts\Activate.ps1`
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+pip install -r requirements.txt
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Copy the example env file and fill in real values:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+cp .env.example .env
+```
 
-## Deploy on Vercel
+At minimum, set `DATABASE_URL` to the team's shared Neon connection string (ask a teammate, or see "Working with a shared database" below). `RESEND_API_KEY`, `GEMINI_API_KEY`, `GROQ_API_KEY`, and the `TWILIO_*` variables can be left blank locally — the features that need them will fail gracefully and log a warning instead of crashing, but you'll want real keys to actually test those features.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Apply the database schema:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+alembic upgrade head
+```
+
+(Optional) Seed demo data so the dashboard has something to show:
+
+```bash
+python seed_demo_data.py
+```
+
+This is safe to run once against an empty/fresh set of demo rows — it checks for the demo patient (`patient@demo.com`) first and exits without changes if that data already exists, so it will not duplicate rows if you (or a teammate) already ran it against the shared database.
+
+Start the backend:
+
+```bash
+uvicorn app.main:app --reload
+```
+
+The API is now running at `http://localhost:8000`.
+
+### 3. Frontend setup
+
+In a second terminal:
+
+```bash
+cd frontend
+npm install
+cp .env.example .env.local
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). `.env.local` only needs editing if your backend isn't running on `localhost:8000`.
+
+### Working with a shared database
+
+The team shares one Neon PostgreSQL database. A few rules to avoid collisions:
+
+- **Never run `seed_demo_data.py` more than once against it** — it already guards against duplicate demo rows, but it is not a substitute for each teammate creating their own real test accounts through the app's normal registration flow for anything beyond the fixed demo patient/family/doctor trio.
+- **Run `alembic upgrade head` before you start working**, and whenever you pull new commits — someone else may have added a migration. Never hand-edit the shared schema outside of a migration file.
+- **If you need a new table or column**, write an Alembic migration (`alembic revision --autogenerate -m "..."`) rather than editing the database directly — otherwise everyone else's local schema drifts out of sync with yours.
+- Each teammate's `backend/.env` should point at the same `DATABASE_URL` — get it from whoever set up the Neon project, or from the Neon console's "Connect" dialog if you have access.
+
+## Deployment
+
+- **Frontend:** Vercel
+- **Backend + PostgreSQL:** Render / Neon
