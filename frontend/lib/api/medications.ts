@@ -1,21 +1,42 @@
 /**
  * lib/api/medications.ts
  * -------------------------
- * OWNED BY MEMBER 2 (Afifa) - Medications, Appointments, Prescriptions,
- * Adherence.
- *
- * Add your API call functions here as you build your backend endpoints,
- * e.g.:
- *
- * import { apiFetch } from "@/lib/apiClient";
- *
- * export function bookAppointment(payload: {...}) {
- *   return apiFetch(`/appointments/book`, { method: "POST", body: JSON.stringify(payload) });
- * }
+ * OWNED BY MEMBER 2 (Afifa) - Medication Management (README S6.2/S8.4).
  */
 
-// Empty `export {}` makes this a valid ES module (TS requires at least one
-// import/export) so `export * from "./api/medications"` in lib/api.ts
-// doesn't break the build before this file has real content. Remove this
-// line once you add your first real export above.
-export {};
+import { apiFetch } from "@/lib/apiClient";
+// MedicationOut is defined in lib/api/dashboard.ts (same shape, used by
+// both the dashboard summary card and this file's full CRUD) - imported
+// here rather than redeclared to avoid an ambiguous re-export from
+// lib/api.ts, which re-exports every api/*.ts file.
+import type { MedicationOut } from "@/lib/api/dashboard";
+
+export interface MedicationInput {
+  medicine_name: string;
+  dosage: string;
+  frequency: string;
+  start_date?: string | null;
+  end_date?: string | null;
+}
+
+export function getMedications(patientId: string) {
+  return apiFetch(`/medications/${patientId}`) as Promise<MedicationOut[]>;
+}
+
+export function createMedication(patientId: string, payload: MedicationInput) {
+  return apiFetch(`/medications/${patientId}`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }) as Promise<MedicationOut>;
+}
+
+export function updateMedication(patientId: string, medicationId: string, payload: Partial<MedicationInput>) {
+  return apiFetch(`/medications/${patientId}/${medicationId}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  }) as Promise<MedicationOut>;
+}
+
+export function deleteMedication(patientId: string, medicationId: string) {
+  return apiFetch(`/medications/${patientId}/${medicationId}`, { method: "DELETE" });
+}
