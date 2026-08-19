@@ -202,60 +202,44 @@ def create_appointment(
     )
 
     # ========================================================
-    # 4. CREATE GOOGLE CALENDAR EVENT
+    # 4. CREATE GOOGLE CALENDAR EVENT (best-effort)
     # ========================================================
+    #
+    # Calendar sync is a convenience layer on top of the booking, not a
+    # dependency for it (README S7.2's explicit corner case) - the
+    # appointment above is already committed and is the source of truth
+    # regardless of what happens here. Previously this deleted the
+    # just-created appointment and raised on ANY Calendar failure,
+    # including simply not having gone through Google's OAuth flow yet
+    # (which nobody on the team has, since there's no credentials.json/
+    # token.json in this repo) - meaning appointment booking was 100%
+    # broken for everyone, not just degraded when Calendar was
+    # unavailable. Failures are logged and swallowed instead;
+    # google_event_id stays null until a sync succeeds.
 
     try:
-
         google_event = create_google_calendar_event(
             title=(
                 f"Medical Appointment - "
                 f"{appointment.doctor_name}"
             ),
-
             start_time=start_datetime,
-
             end_time=end_datetime,
-
             description=(
                 f"Patient: "
                 f"{appointment.patient_name}\n"
-
                 f"Email: "
                 f"{appointment.patient_email}\n"
-
                 f"Reason: "
                 f"{appointment.reason or 'Not specified'}"
             ),
-
             location=appointment.location
         )
-
-        # ====================================================
-        # 5. SAVE GOOGLE EVENT ID
-        # ====================================================
-
-        db_appointment.google_event_id = (
-            google_event.get("id")
-        )
-
+        db_appointment.google_event_id = google_event.get("id")
         db.commit()
         db.refresh(db_appointment)
-
     except Exception as e:
-
-        # Google Calendar failed.
-        # Remove the PostgreSQL appointment so that
-        # the two systems don't become inconsistent.
-
-        db.delete(db_appointment)
-        db.commit()
-
-        raise Exception(
-            "Appointment could not be synchronized "
-            "with Google Calendar: "
-            f"{str(e)}"
-        )
+        print(f"[appointments] Google Calendar sync skipped for {db_appointment.id}: {e}")
 
     return db_appointment
 
@@ -369,7 +353,7 @@ def update_appointment(
     db.refresh(db_appointment)
 
     # ========================================================
-    # 4. UPDATE GOOGLE CALENDAR
+    # 4. UPDATE GOOGLE CALENDAR (best-effort - see create_appointment)
     # ========================================================
 
     if db_appointment.google_event_id:
@@ -415,12 +399,7 @@ def update_appointment(
             )
 
         except Exception as e:
-
-            raise Exception(
-                "Appointment was updated in PostgreSQL, "
-                "but Google Calendar could not be updated: "
-                f"{str(e)}"
-            )
+            print(f"[appointments] Google Calendar update skipped for {db_appointment.id}: {e}")
 
     return db_appointment
 
@@ -450,7 +429,7 @@ def delete_appointment(
     )
 
     # ========================================================
-    # 3. DELETE GOOGLE CALENDAR EVENT
+    # 3. DELETE GOOGLE CALENDAR EVENT (best-effort - see create_appointment)
     # ========================================================
 
     if google_event_id:
@@ -462,13 +441,7 @@ def delete_appointment(
             )
 
         except Exception as e:
-
-            raise Exception(
-                "Appointment could not be deleted "
-                "because the Google Calendar event "
-                "could not be deleted: "
-                f"{str(e)}"
-            )
+            print(f"[appointments] Google Calendar deletion skipped for {appointment_id}: {e}")
 
     # ========================================================
     # 4. DELETE FROM POSTGRESQL

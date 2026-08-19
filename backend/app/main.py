@@ -33,6 +33,8 @@ from app.routers import emergency as emergency_router
 from app.routers import medications as medications_router
 from app.routers import fall_incidents as fall_incidents_router
 from app.routers import safety_checkin as safety_checkin_router
+from app import appointments as appointments_router
+from app import calendar as calendar_router
 
 from app.services.scheduler import start_scheduler
 
@@ -58,10 +60,17 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(me.router)
 app.include_router(vitals_router.router)
-app.include_router(medications_router.router)  # placeholder, 0 routes
+app.include_router(medications_router.router)
 app.include_router(emergency_router.router)
 app.include_router(fall_incidents_router.router)
 app.include_router(safety_checkin_router.router)
+app.include_router(appointments_router.router)
+# Google Calendar OAuth flow - fully built but nobody on the team has
+# completed the OAuth consent flow / has a credentials.json yet, so
+# every route here 404s/401s until someone does. Booking itself doesn't
+# depend on this (see appointments.py/crud.py - Calendar sync is
+# best-effort), this just exposes the connect/status/events endpoints.
+app.include_router(calendar_router.router)
 app.include_router(dashboard.router)
 app.include_router(notifications.router)
 app.include_router(reports.router)

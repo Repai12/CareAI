@@ -71,13 +71,10 @@ db.add_all([
               logged_at=datetime.utcnow() - timedelta(hours=6)),
 ])
 
-# Medication/Appointment have no patient linkage in the current schema
-# (see models/medication.py) - these rows are demo content only, not
-# scoped to the demo patient above.
 db.add_all([
-    Medication(medicine_name="Metformin", dosage="500mg", frequency="Twice daily",
+    Medication(patient_id=patient.id, medicine_name="Metformin", dosage="500mg", frequency="Twice daily",
                start_date=datetime.utcnow().date(), end_date=None),
-    Medication(medicine_name="Amlodipine", dosage="5mg", frequency="Once daily",
+    Medication(patient_id=patient.id, medicine_name="Amlodipine", dosage="5mg", frequency="Once daily",
                start_date=datetime.utcnow().date(), end_date=None),
 ])
 
