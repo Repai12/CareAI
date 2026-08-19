@@ -40,7 +40,14 @@ export default function LoginPage() {
         setLoading(false);
         return;
       }
-      router.push(`/dashboard/${patients[0].id}`);
+      // Exactly one patient -> straight to their dashboard. More than one
+      // (a family member or doctor linked to multiple patients) -> the
+      // list page, since there's no single "right" one to guess.
+      if (patients.length === 1) {
+        router.push(`/dashboard/${patients[0].id}`);
+      } else {
+        router.push("/patients");
+      }
     } catch (err: any) {
       setError(err.message || "Login failed");
       setLoading(false);
