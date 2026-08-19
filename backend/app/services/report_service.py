@@ -87,11 +87,22 @@ def generate_weekly_report(db: Session, patient_id) -> list[EmailLog]:
         if not recipient.email:
             continue
 
-        success = send_email(
-            to_email=recipient.email,
-            subject=f"CareAI Weekly Health Report - {patient.name}",
-            html_content=html,
-        )
+        # send_email() itself never raises (returns False on any failure,
+        # including no API key configured), but this stays defensive
+        # per-recipient anyway - the same "one bad recipient can't take
+        # down the rest of the batch" rule used for SOS/fall-alert SMS
+        # applies here: one family member's bounced/invalid address must
+        # not stop the doctor's copy of the same report from sending.
+        try:
+            success = send_email(
+                to_email=recipient.email,
+                subject=f"CareAI Weekly Health Report - {patient.name}",
+                html_content=html,
+            )
+        except Exception as e:
+            print(f"[weekly report] unexpected error emailing {recipient.email}: {e}")
+            success = False
+
         log = EmailLog(
             patient_id=patient_id,
             recipient_email=recipient.email,
