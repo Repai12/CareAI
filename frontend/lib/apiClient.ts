@@ -35,6 +35,23 @@ export function getMyRole(): string | null {
   return localStorage.getItem("careai_role");
 }
 
+/**
+ * Reads the `sub` claim (the user's own id) out of the in-memory access
+ * token, purely for UI decisions like "only show edit controls on my
+ * own notes" - never a security boundary, since the token isn't
+ * verified here (the backend re-checks ownership on every write
+ * regardless). Returns null if there's no token yet.
+ */
+export function getMyUserId(): string | null {
+  if (!accessToken) return null;
+  try {
+    const payload = JSON.parse(atob(accessToken.split(".")[1]));
+    return payload.sub ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function setMyRole(role: string | null) {
   if (typeof window === "undefined") return;
   if (role) localStorage.setItem("careai_role", role);

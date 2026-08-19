@@ -111,6 +111,12 @@ export default function DashboardPage() {
             Medications &amp; Appointments
           </Link>
           <Link
+            href={`/visit-notes/${patientId}`}
+            className="text-xs font-medium text-sage border border-sageLight rounded-full px-3 py-1.5 hover:bg-sageLight transition"
+          >
+            Visit Notes
+          </Link>
+          <Link
             href={`/notifications/${patientId}`}
             className="text-xs font-medium text-sage border border-sageLight rounded-full px-3 py-1.5 hover:bg-sageLight transition"
           >
