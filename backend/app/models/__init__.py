@@ -5,7 +5,7 @@ Imports every model file so SQLAlchemy's Base.metadata knows about all
 tables when main.py calls Base.metadata.create_all(). When you add a new
 model file, add its import here too.
 """
-from app.models.user import User, UserRole, PatientLink
+from app.models.user import User, UserRole, CareLink, CareLinkStatus, CareLinkPermission, RefreshToken
 from app.models.vitals import VitalsLog
 from app.models.medication import Medication, Appointment
 from app.models.email_log import EmailLog

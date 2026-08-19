@@ -31,9 +31,7 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const res = await login(email, password);
-      localStorage.setItem("careai_token", res.access_token);
-      localStorage.setItem("careai_role", res.role);
+      await login(email, password);
 
       const patients = await getMyPatients();
       if (patients.length === 0) {
@@ -79,7 +77,12 @@ export default function LoginPage() {
           required
         />
 
-        <label className="block text-sm text-ink/70 mb-1">Password</label>
+        <div className="flex items-center justify-between mb-1">
+          <label className="block text-sm text-ink/70">Password</label>
+          <Link href="/forgot-password" className="text-xs text-sage font-medium">
+            Forgot password?
+          </Link>
+        </div>
         <input
           type="password"
           value={password}

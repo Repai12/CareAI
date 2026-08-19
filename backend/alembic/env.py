@@ -97,6 +97,15 @@ def include_object(
         - appointments
         - medication_logs
         - visit_notes
+
+    users/refresh_tokens were added 2026-08-20: every other shared table
+    is created by app/main.py's Base.metadata.create_all(), which works
+    fine for a brand-new table but can never add a column to one that
+    already exists. Since auth needed new columns on the existing `users`
+    table, it had to become a real migration (see revision 6426cf84a54e)
+    rather than relying on create_all() - so it's tracked here too now.
+    If your table only ever needs CREATE (no future ALTERs), create_all()
+    is still fine and you don't need to add it to this set.
     """
 
     managed_tables = {
@@ -104,6 +113,9 @@ def include_object(
         "appointments",
         "medication_logs",
         "visit_notes",
+        "users",
+        "refresh_tokens",
+        "care_links",
     }
 
     # Only allow these tables to be considered by Alembic.

@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
 
-from app.models.user import User, UserRole, PatientLink
+from app.models.user import User, UserRole, CareLink, CareLinkStatus
 from app.models.vitals import VitalsLog
 from app.models.medication import Medication, Appointment
 from app.models.email_log import EmailLog
@@ -76,8 +76,8 @@ def generate_weekly_report(db: Session, patient_id) -> list[EmailLog]:
 
     recipients = (
         db.query(User)
-        .join(PatientLink, PatientLink.viewer_id == User.id)
-        .filter(PatientLink.patient_id == patient_id)
+        .join(CareLink, CareLink.viewer_id == User.id)
+        .filter(CareLink.patient_id == patient_id, CareLink.status == CareLinkStatus.active.value)
         .all()
     )
 

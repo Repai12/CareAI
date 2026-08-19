@@ -1,13 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { logout } from "@/lib/api";
 
 export default function LogoutButton() {
   const router = useRouter();
 
-  function handleLogout() {
-    localStorage.removeItem("careai_token");
-    localStorage.removeItem("careai_role");
+  async function handleLogout() {
+    await logout();
     router.push("/login");
   }
 
