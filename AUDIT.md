@@ -64,11 +64,24 @@ description of what happened. Staging file-by-file (no wildcards) going forward 
     and Daily Check-in, both working on the backend since commit `385ca49` but with zero UI. Built
     `/safety/[patientId]` covering all three.
 
+11. **Weekly Email Report hardened end-to-end** (`f5a0736`) — taken to zero known corner cases as a
+    deliberate "finish one feature completely" pass. Found and fixed three separate real bugs:
+    `send_email()` raised instead of returning `False` when `RESEND_API_KEY` was unset (crashed both
+    the weekly report AND the doctor AI summary — same root cause, fixed once in `email_service.py`
+    for both); `POST /reports/weekly/trigger` had no ownership check at all (any patient/doctor could
+    trigger emails about an unrelated patient — a real IDOR) and `GET /reports/weekly/{id}` had no
+    auth check whatsoever; and `ReportPanel.tsx` compared status against lowercase `"sent"` when the
+    backend always returns uppercase `"SENT"`/`"FAILED"`, so a successful send silently rendered in
+    the failure color. Added a 24h duplicate-send guard (doesn't block retrying failed attempts).
+
 **Not yet done**: frontend route restructuring (`/patient/*`, `/family/*`, `/doctor/*` — the current
 shared-page-with-role-checks approach works correctly, this is organizational/cosmetic, not a
-functional gap), visual/interaction polish pass. Google Calendar OAuth is wired in but unverified
-beyond "doesn't crash the app" — nobody has real Google Cloud OAuth credentials to test the actual
-flow against.
+functional gap), visual/interaction polish pass, persistent doctor-unverified badge (currently only
+shown once at registration), SOS's 3-second cancel window + rapid-repeat rate limiting, "no linked
+family/doctor yet" dashboard nudge banner, and cleanup of unused mismatched-style component files
+(`MedicationForm/Table`, `AppointmentForm/Table`, `VisitNoteForm/History`). Google Calendar OAuth is
+wired in but unverified beyond "doesn't crash the app" — nobody has real Google Cloud OAuth
+credentials to test the actual flow against.
 
 ---
 
