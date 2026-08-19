@@ -31,6 +31,8 @@ from app.routers import (
 from app.routers import vitals as vitals_router
 from app.routers import emergency as emergency_router
 from app.routers import medications as medications_router
+from app.routers import fall_incidents as fall_incidents_router
+from app.routers import safety_checkin as safety_checkin_router
 
 from app.services.scheduler import start_scheduler
 
@@ -58,6 +60,8 @@ app.include_router(me.router)
 app.include_router(vitals_router.router)
 app.include_router(medications_router.router)  # placeholder, 0 routes
 app.include_router(emergency_router.router)
+app.include_router(fall_incidents_router.router)
+app.include_router(safety_checkin_router.router)
 app.include_router(dashboard.router)
 app.include_router(notifications.router)
 app.include_router(reports.router)
