@@ -36,14 +36,20 @@ description of what happened. Staging file-by-file (no wildcards) going forward 
    booking instead of degrading gracefully, the opposite of the README requirement. Fixed all three,
    wired appointments.py + calendar.py into main.py, added the missing frontend page.
 
-**Not yet done** — still open per the fix order below: `medication_logs`/`visit_notes` (README S8.3/
-S8.4 — doctor notes, adherence tracker — models don't exist at all yet, referenced by dead code that
-assumes they do), a feature-by-feature real-user pass across the AI features (symptom checker, diet
-advisor, report analyzer — currently believed working but not yet re-verified against corner cases
-the way auth/connections/SOS/medications were), frontend route restructuring (`/patient/*`,
-`/family/*`, `/doctor/*`), visual/interaction polish. Google Calendar OAuth is wired in but unverified
-beyond "doesn't crash the app" — nobody has real Google Cloud OAuth credentials to test the actual
-flow against.
+6. **Medicine Adherence Tracker + Doctor Visit Notes** (`1c3ee43`, `85f7498`) — same story as
+   appointments: dead routers with zero auth, referencing `MedicationLog`/`VisitNote` model classes
+   that were never defined anywhere (`crud.py` even had a second, equally dead, unused duplicate
+   implementation). Built real models + migration, real auth (doctor-only writes, only the authoring
+   doctor can edit/archive their own note), the "3 consecutive misses, not every miss" notification
+   nuance from README S8.4, and frontend for both. Also fixed the login page's demo-account
+   quick-select buttons, which still pointed at pre-rewrite seed emails and silently failed.
+
+**Not yet done** — still open per the fix order below: a feature-by-feature real-user pass across the
+AI features (symptom checker, diet advisor, report analyzer — currently believed working but not yet
+re-verified against corner cases the way everything else has been), frontend route restructuring
+(`/patient/*`, `/family/*`, `/doctor/*`), visual/interaction polish. Google Calendar OAuth is wired in
+but unverified beyond "doesn't crash the app" — nobody has real Google Cloud OAuth credentials to test
+the actual flow against.
 
 ---
 
