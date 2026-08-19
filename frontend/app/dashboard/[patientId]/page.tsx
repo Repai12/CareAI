@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { DashboardResponse, WeeklyReportOut, getDashboard, getReportHistory, apiFetch } from "@/lib/api";
+import { DashboardResponse, WeeklyReportOut, getDashboard, getReportHistory, triggerSOS } from "@/lib/api";
 import VitalsCard from "@/components/VitalsCard";
 import MedicationsCard from "@/components/MedicationsCard";
 import AppointmentsCard from "@/components/AppointmentsCard";
@@ -50,8 +50,16 @@ export default function DashboardPage() {
     setSosLoading(true);
     setSosMessage(null);
     try {
-      const res = await apiFetch("/api/emergency/sos", { method: "POST" });
-      setSosMessage(`SOS Alert sent: ${res.message || "processed"}`);
+      const res = await triggerSOS();
+      if (res.failed_to.length > 0) {
+        setSosMessage(
+          `SOS sent. Delivered to ${res.delivered_to.length}, failed to reach ${res.failed_to.length} contact(s).`
+        );
+      } else if (res.delivered_to.length === 0) {
+        setSosMessage("SOS logged and family/doctor notified - no emergency contacts on file to text. Add one in Safety.");
+      } else {
+        setSosMessage(`SOS sent to all ${res.delivered_to.length} emergency contact(s).`);
+      }
     } catch (e: any) {
       setSosMessage(`SOS failed: ${e.message || "could not trigger alert"}`);
     } finally {
@@ -117,6 +125,12 @@ export default function DashboardPage() {
             className="text-xs font-medium text-sage border border-sageLight rounded-full px-3 py-1.5 hover:bg-sageLight transition"
           >
             Medications &amp; Appointments
+          </Link>
+          <Link
+            href={`/safety/${patientId}`}
+            className="text-xs font-medium text-sage border border-sageLight rounded-full px-3 py-1.5 hover:bg-sageLight transition"
+          >
+            Safety
           </Link>
           <Link
             href={`/visit-notes/${patientId}`}
