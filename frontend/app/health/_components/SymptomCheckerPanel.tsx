@@ -22,6 +22,11 @@ function Entry({ log }: { log: SymptomLogOut }) {
         </span>
       </div>
       <p className="text-sm text-ink">{log.ai_response}</p>
+      {(log.urgency === "urgent" || log.urgency === "emergency") && (
+        <p className="text-xs text-alert font-semibold mt-2 bg-alert/10 rounded-lg px-2 py-1.5">
+          ⚠ This may be urgent — consider using SOS or contacting your doctor.
+        </p>
+      )}
       {log.escalated && (
         <p className="text-xs text-alert font-medium mt-1">Family was automatically notified of this emergency.</p>
       )}
@@ -139,7 +144,13 @@ export default function SymptomCheckerPanel({
   }
 
   return (
-    <SectionCard eyebrow="Feature 3 · Groq, vitals-aware + auto-escalation" title="AI Symptom Checker" icon={<StethoscopeIcon />} accent="alert">
+    <SectionCard
+      eyebrow="Feature 3 · Groq, vitals-aware + auto-escalation"
+      title="AI Symptom Checker"
+      icon={<StethoscopeIcon />}
+      accent="alert"
+      disclaimer="AI-generated guidance, not a diagnosis. For anything serious, contact a doctor or use SOS."
+    >
       {isOwner && (
         <form onSubmit={handleSubmit} className="mb-4">
           <textarea

@@ -12,12 +12,15 @@ export default function SectionCard({
   eyebrow,
   icon,
   accent = "sage",
+  disclaimer,
   children,
 }: {
   title: string;
   eyebrow: string;
   icon?: React.ReactNode;
   accent?: Accent;
+  /** Optional fine-print shown under the title - use for "AI-generated, not a diagnosis" on AI-output panels (README S7.1/S8.1/S8.2). */
+  disclaimer?: string;
   children: React.ReactNode;
 }) {
   const style = ACCENT_STYLES[accent];
@@ -36,6 +39,7 @@ export default function SectionCard({
           <h2 className="text-xl font-display font-semibold text-ink">{title}</h2>
         </div>
       </div>
+      {disclaimer && <p className="text-xs text-ink/40 italic mb-4 -mt-2">{disclaimer}</p>}
       {children}
     </div>
   );

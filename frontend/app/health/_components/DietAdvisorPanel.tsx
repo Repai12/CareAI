@@ -78,7 +78,13 @@ export default function DietAdvisorPanel({
   }
 
   return (
-    <SectionCard eyebrow="Feature 4 · Groq, trend-aware + adherence tracking" title="AI Diet Advisor" icon={<LeafIcon />} accent="sage">
+    <SectionCard
+      eyebrow="Feature 4 · Groq, trend-aware + adherence tracking"
+      title="AI Diet Advisor"
+      icon={<LeafIcon />}
+      accent="sage"
+      disclaimer="AI-generated general guidance, not a substitute for your doctor's dietary orders."
+    >
       {isOwner && (
         <button
           onClick={handleGenerate} disabled={loading}
