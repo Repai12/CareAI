@@ -24,10 +24,26 @@ with one bad pathspec silently aborted, and the follow-up `git status` was misre
 work sat uncommitted for a while. Nothing was lost; it was folded into `83dd871` with an honest
 description of what happened. Staging file-by-file (no wildcards) going forward to avoid a repeat.
 
-**Not yet done** — still open per the fix order below: notifications backbone full wiring (SOS still
-doesn't write to `notifications`), medications `patient_id` fix + wiring the dead routers
-(appointments/calendar/medication_logs/visit_notes), third-party graceful-degradation pass, frontend
-route restructuring (`/patient/*`, `/family/*`, `/doctor/*`), visual/interaction polish.
+4. **SOS, Fall Logger, Daily Check-in** (`385ca49`) — SOS had a UUID/int type bug (delete never
+   worked), 400'd with zero contacts instead of still logging+notifying, and sent SMS as one
+   all-or-nothing batch. Fall Logger and Daily Check-in had DB models but were 100% unreachable —
+   the one file attempting the logic imported a class that didn't exist where it claimed and was
+   never called from anywhere. Built real routers for both, wired the missed-check-in job into the
+   scheduler (runs daily, was never registered).
+5. **Medications + Appointments + Calendar** (`4e5a48a`, `3b90494`) — medications had no `patient_id`
+   (dashboard hardcoded to `[]`); the dead `appointments.py` router had **zero authentication**
+   (any token could read every patient's appointments); Calendar sync failure rolled back the whole
+   booking instead of degrading gracefully, the opposite of the README requirement. Fixed all three,
+   wired appointments.py + calendar.py into main.py, added the missing frontend page.
+
+**Not yet done** — still open per the fix order below: `medication_logs`/`visit_notes` (README S8.3/
+S8.4 — doctor notes, adherence tracker — models don't exist at all yet, referenced by dead code that
+assumes they do), a feature-by-feature real-user pass across the AI features (symptom checker, diet
+advisor, report analyzer — currently believed working but not yet re-verified against corner cases
+the way auth/connections/SOS/medications were), frontend route restructuring (`/patient/*`,
+`/family/*`, `/doctor/*`), visual/interaction polish. Google Calendar OAuth is wired in but unverified
+beyond "doesn't crash the app" — nobody has real Google Cloud OAuth credentials to test the actual
+flow against.
 
 ---
 
