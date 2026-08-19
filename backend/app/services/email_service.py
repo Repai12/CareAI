@@ -17,7 +17,15 @@ resend.api_key = settings.RESEND_API_KEY
 
 def send_email(to_email: str, subject: str, html_content: str) -> bool:
     if not settings.RESEND_API_KEY:
-        raise RuntimeError("RESEND_API_KEY is not set in .env")
+        # Every caller (auth verification/reset, weekly report, doctor AI
+        # summary) treats this as a normal "delivery failed" outcome and
+        # logs/notifies accordingly - raising here instead of returning
+        # False previously crashed the weekly report and AI summary jobs
+        # outright whenever no key was configured (the default state per
+        # .env.example), instead of degrading gracefully like every other
+        # third-party call in this app is supposed to (README S11).
+        print("[Resend] RESEND_API_KEY is not set - email not sent")
+        return False
 
     try:
         resend.Emails.send({

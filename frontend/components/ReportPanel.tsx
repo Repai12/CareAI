@@ -52,7 +52,10 @@ export default function ReportPanel({
             {history.map((r) => (
               <li key={r.id} className="text-sm flex justify-between border-b border-sageLight pb-2">
                 <span className="text-ink/70">{r.recipient_email}</span>
-                <span className={r.status === "sent" ? "text-sage" : "text-alert"}>
+                {/* Backend always returns "SENT"/"FAILED" (uppercase) - a
+                    lowercase comparison here previously matched nothing,
+                    so even a successful send rendered in the failure color. */}
+                <span className={r.status === "SENT" ? "text-sage" : "text-alert"}>
                   {r.status} · {new Date(r.sent_at).toLocaleDateString()}
                 </span>
               </li>
