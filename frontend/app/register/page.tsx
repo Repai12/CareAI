@@ -1,63 +1,38 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { apiFetch, getMyPatients } from "@/lib/api";
+import { register, type RegisterResponse } from "@/lib/api";
 
 type Role = "patient" | "family" | "doctor";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<Role>("patient");
   const [patientCode, setPatientCode] = useState("");
+  const [licenseNumber, setLicenseNumber] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [successCode, setSuccessCode] = useState<string | null>(null);
+  const [result, setResult] = useState<RegisterResponse | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
-      const registerRes = await apiFetch("/auth/register", {
-        method: "POST",
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-          role,
-          patient_code: role !== "patient" ? patientCode : undefined,
-        }),
+      const registerRes = await register({
+        name,
+        email,
+        password,
+        role,
+        patient_code: role !== "patient" ? patientCode : undefined,
+        license_number: role === "doctor" ? licenseNumber : undefined,
       });
-
-      // Patients get a code they need to share - show it before redirecting.
-      if (role === "patient" && registerRes.patient_code) {
-        setSuccessCode(registerRes.patient_code);
-      }
-
-      const loginRes = await apiFetch("/auth/login", {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-      });
-      localStorage.setItem("careai_token", loginRes.access_token);
-      localStorage.setItem("careai_role", loginRes.role);
-
-      const patients = await getMyPatients();
-      if (patients.length === 0) {
-        if (role !== "patient") router.push("/login");
-        return;
-      }
-
-      // Give patients a moment to see/copy their code before redirecting.
-      if (role === "patient") {
-        setTimeout(() => router.push(`/dashboard/${patients[0].id}`), 4000);
-      } else {
-        router.push(`/dashboard/${patients[0].id}`);
-      }
+      // Accounts require email verification before they can log in - no
+      // auto-login here, since /auth/login would just reject it (S3.1).
+      setResult(registerRes);
     } catch (err: any) {
       setError(err.message || "Registration failed");
     } finally {
@@ -65,16 +40,31 @@ export default function RegisterPage() {
     }
   }
 
-  if (successCode) {
+  if (result) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-paper">
         <div className="bg-white border border-sageLight rounded-xl shadow-sm p-8 w-full max-w-sm text-center">
-          <h1 className="text-2xl font-display font-semibold text-ink mb-2">Account created</h1>
+          <h1 className="text-2xl font-display font-semibold text-ink mb-2">Check your email</h1>
           <p className="text-ink/60 text-sm mb-4">
-            Share this code with family members or your doctor so they can link to your account:
+            We sent a verification link to <span className="font-medium">{email}</span>. Click it to activate your
+            account, then sign in.
           </p>
-          <p className="text-2xl font-display font-bold text-sage tracking-wide mb-4">{successCode}</p>
-          <p className="text-xs text-ink/40">Taking you to your dashboard...</p>
+          {result.patient_code && (
+            <>
+              <p className="text-ink/60 text-sm mb-2">
+                Once verified, share this code with family members or your doctor so they can link to your account:
+              </p>
+              <p className="text-2xl font-display font-bold text-sage tracking-wide mb-4">{result.patient_code}</p>
+            </>
+          )}
+          {result.doctor_unverified_notice && (
+            <p className="text-xs text-ink/50 bg-paper border border-sageLight rounded-lg p-3 mb-4">
+              {result.doctor_unverified_notice}
+            </p>
+          )}
+          <Link href="/login" className="text-sage font-medium text-sm">
+            Go to sign in
+          </Link>
         </div>
       </main>
     );
@@ -149,6 +139,22 @@ export default function RegisterPage() {
             />
             <p className="text-xs text-ink/40 -mt-3 mb-4">
               Ask the patient for their code - they get it when they register.
+            </p>
+          </>
+        )}
+
+        {role === "doctor" && (
+          <>
+            <label className="block text-sm text-ink/70 mb-1">Medical license / registration number</label>
+            <input
+              value={licenseNumber}
+              onChange={(e) => setLicenseNumber(e.target.value)}
+              className="w-full border border-sageLight rounded-lg px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-sage"
+              required
+            />
+            <p className="text-xs text-ink/40 -mt-3 mb-4">
+              Not checked against a real registry in this version - your account is marked unverified until an admin
+              reviews it.
             </p>
           </>
         )}

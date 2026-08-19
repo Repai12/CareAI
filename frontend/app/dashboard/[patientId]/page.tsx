@@ -116,6 +116,12 @@ export default function DashboardPage() {
           >
             Notifications
           </Link>
+          <Link
+            href="/connections"
+            className="text-xs font-medium text-sage border border-sageLight rounded-full px-3 py-1.5 hover:bg-sageLight transition"
+          >
+            Connections
+          </Link>
           <StatusBadge vitals={data.latest_vitals} />
           <LogoutButton />
         </div>

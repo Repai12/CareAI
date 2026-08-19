@@ -20,7 +20,7 @@ from anyio import to_thread
 
 from app.database import get_db, SessionLocal
 from app.auth import get_current_user
-from app.models.user import User, UserRole, PatientLink
+from app.models.user import User, UserRole, CareLink, CareLinkStatus
 from app.models.vitals import VitalsLog
 from app.models.medication import Medication, Appointment
 from app.schemas import DashboardResponse
@@ -35,8 +35,12 @@ def _assert_can_view(patient_id: uuid.UUID, current_user: User, db: Session):
         return
 
     link = (
-        db.query(PatientLink)
-        .filter(PatientLink.patient_id == patient_id, PatientLink.viewer_id == current_user.id)
+        db.query(CareLink)
+        .filter(
+            CareLink.patient_id == patient_id,
+            CareLink.viewer_id == current_user.id,
+            CareLink.status == CareLinkStatus.active.value,
+        )
         .first()
     )
     if not link:

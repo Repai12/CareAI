@@ -24,6 +24,7 @@ class NotificationCategory(str, enum.Enum):
     medication = "MEDICATION"   # Member 2 - taken/missed
     appointment = "APPOINTMENT"  # Member 2 - booked/cancelled, also Member 4's report/summary events
     safety = "SAFETY"           # Member 3 - missed check-ins
+    connection = "CONNECTION"   # Member 4 - care_links pending-approval requests (README S4.2)
 
 
 class Notification(Base):

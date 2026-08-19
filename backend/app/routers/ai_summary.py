@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.auth import get_current_user
-from app.models.user import User, UserRole, PatientLink
+from app.models.user import User, UserRole, CareLink, CareLinkStatus
 from app.schemas import EmailLogOut
 from app.services.ai_summary_service import generate_doctor_ai_summary, RateLimitedError
 
@@ -30,10 +30,14 @@ def trigger_ai_summary(
     if current_user.role != UserRole.doctor.value:
         raise HTTPException(403, "Only doctors can generate an AI patient summary")
 
-    # Doctor must actually be linked to this patient
+    # Doctor must actually be actively linked to this patient
     link = (
-        db.query(PatientLink)
-        .filter(PatientLink.patient_id == patient_id, PatientLink.viewer_id == current_user.id)
+        db.query(CareLink)
+        .filter(
+            CareLink.patient_id == patient_id,
+            CareLink.viewer_id == current_user.id,
+            CareLink.status == CareLinkStatus.active.value,
+        )
         .first()
     )
     if not link:

@@ -13,3 +13,9 @@
  *   return apiFetch(`/sos/trigger`, { method: "POST" });
  * }
  */
+
+// Empty `export {}` makes this a valid ES module (TS requires at least one
+// import/export) so `export * from "./api/emergency"` in lib/api.ts
+// doesn't break the build before this file has real content. Remove this
+// line once you add your first real export above.
+export {};

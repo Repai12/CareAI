@@ -18,7 +18,7 @@ from datetime import datetime, timedelta
 
 from app.database import SessionLocal, Base, engine
 import app.models  # noqa: F401 - registers every model with Base before create_all
-from app.models.user import User, UserRole, PatientLink
+from app.models.user import User, UserRole, CareLink, CareLinkStatus, CareLinkPermission
 from app.models.vitals import VitalsLog
 from app.models.medication import Medication, Appointment
 from app.auth import hash_password, generate_patient_code
@@ -35,22 +35,33 @@ if existing:
     db.close()
     raise SystemExit(0)
 
+# is_verified=True on all three - these are demo accounts meant to be
+# usable immediately, skipping the real email verification flow.
 patient = User(name="Abdul Karim", email=DEMO_PATIENT_EMAIL,
-               hashed_password=hash_password("password123"), role=UserRole.patient.value)
+               hashed_password=hash_password("password123"), role=UserRole.patient.value,
+               is_verified=True)
 db.add(patient)
 db.flush()
 patient.patient_code = generate_patient_code(db)
 
 family = User(name="Nusrat Karim", email="family@demo.com",
-              hashed_password=hash_password("password123"), role=UserRole.family.value)
+              hashed_password=hash_password("password123"), role=UserRole.family.value,
+              is_verified=True)
 doctor = User(name="Dr. Farhana Rahman", email="doctor@demo.com",
-              hashed_password=hash_password("password123"), role=UserRole.doctor.value)
+              hashed_password=hash_password("password123"), role=UserRole.doctor.value,
+              is_verified=True)
 db.add_all([family, doctor])
 db.flush()
 
+# Active (not pending) - this is demo data meant to be usable
+# immediately, skipping the real patient-approval step.
 db.add_all([
-    PatientLink(patient_id=patient.id, viewer_id=family.id, relationship_label="family"),
-    PatientLink(patient_id=patient.id, viewer_id=doctor.id, relationship_label="doctor"),
+    CareLink(patient_id=patient.id, viewer_id=family.id, link_role="family",
+              relationship_label="family", permission_level=CareLinkPermission.view_only.value,
+              status=CareLinkStatus.active.value, responded_at=datetime.utcnow()),
+    CareLink(patient_id=patient.id, viewer_id=doctor.id, link_role="doctor",
+              relationship_label="doctor", permission_level=CareLinkPermission.view_and_manage.value,
+              status=CareLinkStatus.active.value, responded_at=datetime.utcnow()),
 ])
 
 db.add_all([

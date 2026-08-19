@@ -23,7 +23,7 @@ from pydantic import BaseModel
 
 from app.database import get_db
 from app.auth import get_current_user
-from app.models.user import User, UserRole, PatientLink
+from app.models.user import User, UserRole, CareLink, CareLinkStatus
 from app.models.notification import Notification
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
@@ -59,8 +59,12 @@ def _assert_can_view_patient(patient_id: uuid.UUID, current_user: User, db: Sess
             raise HTTPException(403, "Patients can only view their own notifications")
         return
     link = (
-        db.query(PatientLink)
-        .filter(PatientLink.patient_id == patient_id, PatientLink.viewer_id == current_user.id)
+        db.query(CareLink)
+        .filter(
+            CareLink.patient_id == patient_id,
+            CareLink.viewer_id == current_user.id,
+            CareLink.status == CareLinkStatus.active.value,
+        )
         .first()
     )
     if not link:

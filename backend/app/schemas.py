@@ -40,6 +40,29 @@ class UserBase(BaseModel):
 
 
 # ============================================================
+# CARE LINKS (patient <-> family/doctor connections, README S4)
+# ============================================================
+
+class CareLinkOut(BaseModel):
+    id: uuid.UUID
+    patient_id: uuid.UUID
+    patient_name: str
+    viewer_id: uuid.UUID
+    viewer_name: str
+    link_role: str
+    relationship_label: Optional[str] = None
+    permission_level: str
+    status: str
+    created_at: datetime
+    responded_at: Optional[datetime] = None
+    revoked_at: Optional[datetime] = None
+
+
+class CareLinkPermissionUpdate(BaseModel):
+    permission_level: str
+
+
+# ============================================================
 # VITALS
 # ============================================================
 

@@ -26,7 +26,7 @@ import google.generativeai as genai
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.models.user import User, UserRole, PatientLink
+from app.models.user import User, UserRole
 from app.models.vitals import VitalsLog
 from app.models.medication import Medication, Appointment
 from app.models.email_log import EmailLog
