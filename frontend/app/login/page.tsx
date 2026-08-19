@@ -7,10 +7,11 @@ import { login, getMyPatients } from "@/lib/api";
 
 type DemoRole = "patient" | "doctor" | "family";
 
+// Matches backend/seed_demo_data.py - update both together.
 const DEMO_ACCOUNTS: Record<DemoRole, { email: string; label: string }> = {
   patient: { email: "patient@demo.com", label: "Patient" },
-  doctor: { email: "repai1001+doctor@gmail.com", label: "Doctor" },
-  family: { email: "repai1001@gmail.com", label: "Family / Well-wisher" },
+  doctor: { email: "doctor@demo.com", label: "Doctor" },
+  family: { email: "family@demo.com", label: "Family / Well-wisher" },
 };
 
 export default function LoginPage() {

@@ -18,4 +18,6 @@ export * from "./api/me";
 export * from "./api/vitals";
 export * from "./api/medications";
 export * from "./api/appointments";
+export * from "./api/medicationLogs";
+export * from "./api/visitNotes";
 export * from "./api/emergency";

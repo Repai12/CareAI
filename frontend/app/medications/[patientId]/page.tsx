@@ -11,10 +11,17 @@ import {
   bookAppointment,
   cancelAppointment,
   getMyConnections,
+  getMedicationLogs,
+  scheduleMedicationLog,
+  markMedicationTaken,
+  markMedicationMissed,
+  getMedicationAdherence,
   type MedicationOut,
   type MedicationInput,
   type AppointmentDetail,
   type AppointmentInput,
+  type MedicationLogOut,
+  type AdherenceOut,
 } from "@/lib/api";
 import { getMyRole } from "@/lib/apiClient";
 
@@ -37,6 +44,11 @@ export default function MedicationsAppointmentsPage() {
   const [apptForm, setApptForm] = useState(EMPTY_APPT);
   const [showApptForm, setShowApptForm] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const [expandedMedId, setExpandedMedId] = useState<string | null>(null);
+  const [medLogs, setMedLogs] = useState<MedicationLogOut[]>([]);
+  const [adherence, setAdherence] = useState<AdherenceOut | null>(null);
+  const [reminderTime, setReminderTime] = useState("");
 
   function load() {
     setLoading(true);
@@ -91,8 +103,48 @@ export default function MedicationsAppointmentsPage() {
     try {
       await deleteMedication(patientId, id);
       setMedications((prev) => prev.filter((m) => m.id !== id));
+      if (expandedMedId === id) setExpandedMedId(null);
     } catch (e: any) {
       setError(e.message || "Couldn't remove that medication.");
+    }
+  }
+
+  function loadAdherence(medicationId: string) {
+    Promise.all([getMedicationLogs(patientId, medicationId), getMedicationAdherence(patientId, medicationId)])
+      .then(([logs, adh]) => {
+        setMedLogs(logs);
+        setAdherence(adh);
+      })
+      .catch((e) => setError(e.message));
+  }
+
+  function toggleAdherence(medicationId: string) {
+    if (expandedMedId === medicationId) {
+      setExpandedMedId(null);
+      return;
+    }
+    setExpandedMedId(medicationId);
+    loadAdherence(medicationId);
+  }
+
+  async function handleScheduleReminder(medicationId: string) {
+    if (!reminderTime) return;
+    try {
+      await scheduleMedicationLog(patientId, medicationId, new Date(reminderTime).toISOString());
+      setReminderTime("");
+      loadAdherence(medicationId);
+    } catch (e: any) {
+      setError(e.message || "Couldn't schedule that reminder.");
+    }
+  }
+
+  async function handleMarkDose(medicationId: string, logId: string, taken: boolean) {
+    try {
+      if (taken) await markMedicationTaken(patientId, logId);
+      else await markMedicationMissed(patientId, logId);
+      loadAdherence(medicationId);
+    } catch (e: any) {
+      setError(e.message || "Couldn't update that reminder.");
     }
   }
 
@@ -184,18 +236,84 @@ export default function MedicationsAppointmentsPage() {
             ) : (
               <ul className="space-y-2">
                 {medications.map((m) => (
-                  <li key={m.id} className="bg-white border border-sageLight rounded-xl p-4 flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-ink text-sm">{m.medicine_name}</p>
-                      <p className="text-xs text-ink/50 mt-0.5">
-                        {m.dosage} · {m.frequency}
-                        {m.end_date && ` · until ${m.end_date}`}
-                      </p>
-                    </div>
-                    {canManage && (
-                      <button onClick={() => handleDeleteMedication(m.id)} className="text-xs text-alert hover:underline shrink-0">
-                        Remove
+                  <li key={m.id} className="bg-white border border-sageLight rounded-xl p-4">
+                    <div className="flex items-center justify-between">
+                      <button onClick={() => toggleAdherence(m.id)} className="text-left flex-1">
+                        <p className="font-medium text-ink text-sm">{m.medicine_name}</p>
+                        <p className="text-xs text-ink/50 mt-0.5">
+                          {m.dosage} · {m.frequency}
+                          {m.end_date && ` · until ${m.end_date}`}
+                        </p>
                       </button>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <button onClick={() => toggleAdherence(m.id)} className="text-xs text-sage hover:underline">
+                          {expandedMedId === m.id ? "Hide" : "Reminders"}
+                        </button>
+                        {canManage && (
+                          <button onClick={() => handleDeleteMedication(m.id)} className="text-xs text-alert hover:underline">
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {expandedMedId === m.id && (
+                      <div className="mt-3 pt-3 border-t border-sageLight/60">
+                        {adherence && (
+                          <p className="text-xs text-ink/60 mb-2">
+                            Adherence: <span className="font-medium text-ink">{adherence.adherence_percentage}%</span>
+                            {" "}({adherence.taken} taken, {adherence.missed} missed, {adherence.pending} pending)
+                          </p>
+                        )}
+
+                        {medLogs.length === 0 ? (
+                          <p className="text-xs text-ink/40 mb-2">No reminders scheduled yet.</p>
+                        ) : (
+                          <ul className="space-y-1 mb-3">
+                            {medLogs.map((log) => (
+                              <li key={log.id} className="flex items-center justify-between text-xs">
+                                <span className="text-ink/70">
+                                  {new Date(log.scheduled_at).toLocaleString()} ·{" "}
+                                  <span
+                                    className={
+                                      log.status === "taken" ? "text-sage" : log.status === "missed" ? "text-alert" : "text-gold"
+                                    }
+                                  >
+                                    {log.status}
+                                  </span>
+                                </span>
+                                {canManage && log.status === "pending" && (
+                                  <span className="flex gap-2">
+                                    <button onClick={() => handleMarkDose(m.id, log.id, true)} className="text-sage hover:underline">
+                                      Mark taken
+                                    </button>
+                                    <button onClick={() => handleMarkDose(m.id, log.id, false)} className="text-alert hover:underline">
+                                      Mark missed
+                                    </button>
+                                  </span>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+
+                        {canManage && (
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="datetime-local"
+                              value={reminderTime}
+                              onChange={(e) => setReminderTime(e.target.value)}
+                              className="border border-sageLight rounded-lg px-2 py-1 text-xs"
+                            />
+                            <button
+                              onClick={() => handleScheduleReminder(m.id)}
+                              className="text-xs font-medium bg-sage text-white px-3 py-1.5 rounded-lg hover:bg-sage/90"
+                            >
+                              Schedule reminder
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </li>
                 ))}
