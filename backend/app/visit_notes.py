@@ -1,353 +1,213 @@
+"""
+visit_notes.py
+------------------
+OWNED BY MEMBER 2 (Afifa) - Doctor Visit History & Prescriptions
+(README S8.3). Rewritten from the original version, which had no
+authentication at all and referenced a VisitNote model class that was
+never actually defined - see models/medication.py for the real one,
+added alongside this rewrite.
+
+Only doctors can write notes, and only for a patient they're actively
+linked to. Editing/archiving is further restricted to the doctor who
+wrote the note - "doctors can edit/archive their own notes but not
+another doctor's if a patient has more than one" (S8.3's explicit rule).
+Patients and any linked family/doctor can read the full history.
+"""
+
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from .database import get_db
-from .models import Appointment, VisitNote
-from .schemas import (
-    VisitNoteCreate,
-    VisitNoteUpdate,
-    VisitNoteResponse,
-)
+from .auth import get_current_user
+from .models.user import User, UserRole, CareLink, CareLinkStatus, CareLinkPermission
+from .models.medication import Appointment, VisitNote
+from .models.notification import NotificationCategory
+from .services.notification_service import create_notification
+from .schemas import VisitNoteCreate, VisitNoteUpdate, VisitNoteResponse
 
-
-# ============================================================
-# ROUTER
-# ============================================================
-
-router = APIRouter(
-    prefix="/visit-notes",
-    tags=["Doctor Visit History"]
-)
-
-
-# ============================================================
-# BANGLADESH TIMEZONE
-# ============================================================
+router = APIRouter(prefix="/visit-notes", tags=["Doctor Visit History"])
 
 BANGLADESH_TZ = ZoneInfo("Asia/Dhaka")
 
 
-# ============================================================
-# HELPER — CURRENT BANGLADESH DATE/TIME
-# ============================================================
-
-def get_current_bangladesh_datetime() -> datetime:
-    return datetime.now(BANGLADESH_TZ)
-
-
 def get_current_bangladesh_date() -> date:
-    return get_current_bangladesh_datetime().date()
+    return datetime.now(BANGLADESH_TZ).date()
 
 
-# ============================================================
-# CREATE VISIT NOTE
-# ============================================================
+def _assert_can_view(patient_id: UUID, current_user: User, db: Session):
+    if current_user.role == UserRole.patient.value:
+        if current_user.id != patient_id:
+            raise HTTPException(403, "Patients can only view their own visit notes")
+        return
+    link = (
+        db.query(CareLink)
+        .filter(
+            CareLink.patient_id == patient_id,
+            CareLink.viewer_id == current_user.id,
+            CareLink.status == CareLinkStatus.active.value,
+        )
+        .first()
+    )
+    if not link:
+        raise HTTPException(403, "You do not have access to this patient's visit notes")
 
-@router.post(
-    "/",
-    response_model=VisitNoteResponse
-)
+
+def _assert_is_treating_doctor(patient_id: UUID, current_user: User, db: Session):
+    if current_user.role != UserRole.doctor.value:
+        raise HTTPException(403, "Only doctors can write visit notes")
+    link = (
+        db.query(CareLink)
+        .filter(
+            CareLink.patient_id == patient_id,
+            CareLink.viewer_id == current_user.id,
+            CareLink.status == CareLinkStatus.active.value,
+            CareLink.permission_level == CareLinkPermission.view_and_manage.value,
+        )
+        .first()
+    )
+    if not link:
+        raise HTTPException(403, "You are not an active, managing doctor for this patient")
+
+
+def _get_patient_or_404(patient_id: UUID, db: Session) -> User:
+    patient = db.query(User).filter(User.id == patient_id, User.role == UserRole.patient.value).first()
+    if not patient:
+        raise HTTPException(404, "Patient not found")
+    return patient
+
+
+@router.post("/{patient_id}", response_model=VisitNoteResponse)
 def create_visit_note(
-    visit_note: VisitNoteCreate,
-    db: Session = Depends(get_db)
+    patient_id: UUID,
+    payload: VisitNoteCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
+    patient = _get_patient_or_404(patient_id, db)
+    _assert_is_treating_doctor(patient_id, current_user, db)
 
-    # --------------------------------------------------------
-    # 1. Validate appointment if one was provided
-    # --------------------------------------------------------
+    if payload.appointment_id is not None:
+        appt = db.query(Appointment).filter(Appointment.id == payload.appointment_id).first()
+        if appt is None:
+            raise HTTPException(404, "Appointment not found.")
 
-    if visit_note.appointment_id is not None:
+    if payload.visit_date > get_current_bangladesh_date():
+        raise HTTPException(400, "Visit date cannot be in the future.")
 
-        appointment = (
-            db.query(Appointment)
-            .filter(
-                Appointment.id
-                == visit_note.appointment_id
-            )
-            .first()
-        )
-
-        if appointment is None:
-
-            raise HTTPException(
-                status_code=404,
-                detail="Appointment not found."
-            )
-
-    # --------------------------------------------------------
-    # 2. Prevent future visit dates
-    # --------------------------------------------------------
-
-    current_date = get_current_bangladesh_date()
-
-    if visit_note.visit_date > current_date:
-
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                "Visit date cannot be in the future."
-            )
-        )
-
-    # --------------------------------------------------------
-    # 3. Create visit note
-    # --------------------------------------------------------
-
-    now = get_current_bangladesh_datetime()
-
-    new_visit_note = VisitNote(
-        patient_name=visit_note.patient_name,
-        doctor_name=visit_note.doctor_name,
-        appointment_id=visit_note.appointment_id,
-        visit_date=visit_note.visit_date,
-        notes=visit_note.notes,
-        prescription=visit_note.prescription,
+    now = datetime.utcnow()
+    note = VisitNote(
+        patient_id=patient_id,
+        patient_name=patient.name,
+        doctor_id=current_user.id,
+        doctor_name=current_user.name,
+        appointment_id=payload.appointment_id,
+        visit_date=payload.visit_date,
+        notes=payload.notes,
+        prescription=payload.prescription,
         status="active",
         created_at=now,
-        updated_at=now
+        updated_at=now,
     )
-
-    db.add(new_visit_note)
+    db.add(note)
     db.commit()
-    db.refresh(new_visit_note)
+    db.refresh(note)
 
-    return new_visit_note
+    create_notification(
+        db,
+        patient_id=patient_id,
+        event_type="DOCTOR_NOTE_ADDED",
+        title="New doctor note",
+        message=f"{current_user.name} added a visit note for {patient.name}.",
+        category=NotificationCategory.appointment,
+    )
+    return note
 
 
-# ============================================================
-# GET ALL VISIT NOTES
-# ============================================================
-
-@router.get(
-    "/",
-    response_model=list[VisitNoteResponse]
-)
-def get_visit_notes(
-    db: Session = Depends(get_db)
+@router.get("/{patient_id}", response_model=list[VisitNoteResponse])
+def list_visit_notes(
+    patient_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-
-    visit_notes = (
+    _get_patient_or_404(patient_id, db)
+    _assert_can_view(patient_id, current_user, db)
+    return (
         db.query(VisitNote)
-        .filter(
-            VisitNote.status == "active"
-        )
-        .order_by(
-            VisitNote.visit_date.desc(),
-            VisitNote.created_at.desc()
-        )
+        .filter(VisitNote.patient_id == patient_id, VisitNote.status == "active")
+        .order_by(VisitNote.visit_date.desc(), VisitNote.created_at.desc())
         .all()
     )
 
-    return visit_notes
 
-
-# ============================================================
-# GET SINGLE VISIT NOTE
-# ============================================================
-
-@router.get(
-    "/{visit_note_id}",
-    response_model=VisitNoteResponse
-)
+@router.get("/{patient_id}/{visit_note_id}", response_model=VisitNoteResponse)
 def get_visit_note(
-    visit_note_id: int,
-    db: Session = Depends(get_db)
+    patient_id: UUID,
+    visit_note_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-
-    visit_note = (
+    _assert_can_view(patient_id, current_user, db)
+    note = (
         db.query(VisitNote)
-        .filter(
-            VisitNote.id == visit_note_id,
-            VisitNote.status == "active"
-        )
+        .filter(VisitNote.id == visit_note_id, VisitNote.patient_id == patient_id, VisitNote.status == "active")
         .first()
     )
-
-    if visit_note is None:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Visit note not found."
-        )
-
-    return visit_note
+    if note is None:
+        raise HTTPException(404, "Visit note not found.")
+    return note
 
 
-# ============================================================
-# GET VISIT NOTES FOR A SPECIFIC APPOINTMENT
-# ============================================================
-
-@router.get(
-    "/appointment/{appointment_id}",
-    response_model=list[VisitNoteResponse]
-)
-def get_visit_notes_for_appointment(
-    appointment_id: int,
-    db: Session = Depends(get_db)
-):
-
-    # --------------------------------------------------------
-    # 1. Check appointment exists
-    # --------------------------------------------------------
-
-    appointment = (
-        db.query(Appointment)
-        .filter(
-            Appointment.id == appointment_id
-        )
+def _get_own_note_or_404(patient_id: UUID, visit_note_id: UUID, current_user: User, db: Session) -> VisitNote:
+    if current_user.role != UserRole.doctor.value:
+        raise HTTPException(403, "Only the doctor who wrote a note can edit or archive it")
+    note = (
+        db.query(VisitNote)
+        .filter(VisitNote.id == visit_note_id, VisitNote.patient_id == patient_id, VisitNote.status == "active")
         .first()
     )
-
-    if appointment is None:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Appointment not found."
-        )
-
-    # --------------------------------------------------------
-    # 2. Get visit notes
-    # --------------------------------------------------------
-
-    visit_notes = (
-        db.query(VisitNote)
-        .filter(
-            VisitNote.appointment_id
-            == appointment_id,
-            VisitNote.status == "active"
-        )
-        .order_by(
-            VisitNote.visit_date.desc()
-        )
-        .all()
-    )
-
-    return visit_notes
+    if note is None:
+        raise HTTPException(404, "Visit note not found.")
+    if note.doctor_id != current_user.id:
+        raise HTTPException(403, "You can only edit or archive your own visit notes")
+    return note
 
 
-# ============================================================
-# UPDATE VISIT NOTE
-# ============================================================
-
-@router.put(
-    "/{visit_note_id}",
-    response_model=VisitNoteResponse
-)
+@router.put("/{patient_id}/{visit_note_id}", response_model=VisitNoteResponse)
 def update_visit_note(
-    visit_note_id: int,
-    visit_note_data: VisitNoteUpdate,
-    db: Session = Depends(get_db)
+    patient_id: UUID,
+    visit_note_id: UUID,
+    payload: VisitNoteUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
+    note = _get_own_note_or_404(patient_id, visit_note_id, current_user, db)
 
-    # --------------------------------------------------------
-    # 1. Find visit note
-    # --------------------------------------------------------
+    if payload.notes is not None:
+        if not payload.notes.strip():
+            raise HTTPException(400, "Visit notes cannot be empty.")
+        note.notes = payload.notes
+    if payload.prescription is not None:
+        note.prescription = payload.prescription
 
-    visit_note = (
-        db.query(VisitNote)
-        .filter(
-            VisitNote.id == visit_note_id,
-            VisitNote.status == "active"
-        )
-        .first()
-    )
-
-    if visit_note is None:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Visit note not found."
-        )
-
-    # --------------------------------------------------------
-    # 2. Update notes if provided
-    # --------------------------------------------------------
-
-    if visit_note_data.notes is not None:
-
-        if not visit_note_data.notes.strip():
-
-            raise HTTPException(
-                status_code=400,
-                detail="Visit notes cannot be empty."
-            )
-
-        visit_note.notes = (
-            visit_note_data.notes
-        )
-
-    # --------------------------------------------------------
-    # 3. Update prescription if provided
-    # --------------------------------------------------------
-
-    if visit_note_data.prescription is not None:
-
-        visit_note.prescription = (
-            visit_note_data.prescription
-        )
-
-    # --------------------------------------------------------
-    # 4. Update timestamp
-    # --------------------------------------------------------
-
-    visit_note.updated_at = (
-        get_current_bangladesh_datetime()
-    )
-
+    note.updated_at = datetime.utcnow()
     db.commit()
-    db.refresh(visit_note)
+    db.refresh(note)
+    return note
 
-    return visit_note
 
-
-# ============================================================
-# DELETE / ARCHIVE VISIT NOTE
-# ============================================================
-
-@router.delete(
-    "/{visit_note_id}"
-)
-def delete_visit_note(
-    visit_note_id: int,
-    db: Session = Depends(get_db)
+@router.delete("/{patient_id}/{visit_note_id}")
+def archive_visit_note(
+    patient_id: UUID,
+    visit_note_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-
-    # --------------------------------------------------------
-    # 1. Find visit note
-    # --------------------------------------------------------
-
-    visit_note = (
-        db.query(VisitNote)
-        .filter(
-            VisitNote.id == visit_note_id,
-            VisitNote.status == "active"
-        )
-        .first()
-    )
-
-    if visit_note is None:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Visit note not found."
-        )
-
-    # --------------------------------------------------------
-    # 2. Archive instead of permanently deleting
-    # --------------------------------------------------------
-
-    visit_note.status = "archived"
-
-    visit_note.updated_at = (
-        get_current_bangladesh_datetime()
-    )
-
+    note = _get_own_note_or_404(patient_id, visit_note_id, current_user, db)
+    note.status = "archived"
+    note.updated_at = datetime.utcnow()
     db.commit()
-
-    return {
-        "message":
-            "Visit note archived successfully."
-    }
+    return {"message": "Visit note archived successfully."}
