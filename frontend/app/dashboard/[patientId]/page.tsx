@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { DashboardResponse, WeeklyReportOut, getDashboard, getReportHistory, triggerSOS } from "@/lib/api";
+import { DashboardResponse, WeeklyReportOut, getDashboard, getReportHistory, triggerSOS, getMyConnections } from "@/lib/api";
 import VitalsCard from "@/components/VitalsCard";
 import MedicationsCard from "@/components/MedicationsCard";
 import AppointmentsCard from "@/components/AppointmentsCard";
@@ -32,9 +32,11 @@ export default function DashboardPage() {
   const [role, setRole] = useState<string | null>(null);
   const [sosLoading, setSosLoading] = useState(false);
   const [sosMessage, setSosMessage] = useState<string | null>(null);
+  const [hasNoConnections, setHasNoConnections] = useState(false);
 
   useEffect(() => {
-    setRole(getMyRole());
+    const myRole = getMyRole();
+    setRole(myRole);
     if (!patientId) return;
 
     Promise.all([getDashboard(patientId), getReportHistory(patientId)])
@@ -43,6 +45,14 @@ export default function DashboardPage() {
         setReportHistory(history);
       })
       .catch((e) => setError(e.message));
+
+    // README S5: nudge a patient with nobody on the other end yet - SOS
+    // and daily check-ins are far less useful with no linked family/doctor.
+    if (myRole === "patient") {
+      getMyConnections()
+        .then((links) => setHasNoConnections(!links.some((l) => l.status === "active")))
+        .catch(() => {});
+    }
   }, [patientId]);
 
   async function handleSOS() {
@@ -155,6 +165,21 @@ export default function DashboardPage() {
         </div>
       </header>
 
+      {hasNoConnections && (
+        <div className="mb-6 p-4 bg-gold/10 border border-gold/30 rounded-xl text-sm text-ink/80 flex items-center justify-between gap-4 flex-wrap">
+          <span>
+            No family member or doctor is connected yet - SOS and daily check-ins are much less useful with nobody on
+            the other end.
+          </span>
+          <Link
+            href="/connections"
+            className="text-xs font-medium bg-gold text-white px-3 py-1.5 rounded-full hover:opacity-90 transition shrink-0"
+          >
+            Get connected
+          </Link>
+        </div>
+      )}
+
       {sosMessage && (
         <div className="mb-6 p-3 bg-alert/10 border border-alert/30 text-alert rounded-lg text-sm font-medium">
           {sosMessage}
@@ -184,7 +209,7 @@ export default function DashboardPage() {
         <VitalsCard vitals={data.latest_vitals} />
         <MedicationsCard medications={data.active_medications} />
         <AppointmentsCard appointments={data.upcoming_appointments} />
-        <ReportPanel patientId={patientId} initialHistory={reportHistory} />
+        <ReportPanel patientId={patientId} initialHistory={reportHistory} canTrigger={role === "patient" || role === "doctor"} />
         {role === "doctor" && <AISummaryPanel patientId={patientId} />}
       </div>
     </main>
