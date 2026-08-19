@@ -30,7 +30,13 @@ export default function AISummaryPanel({ patientId }: { patientId: string }) {
   }
 
   return (
-    <SectionCard eyebrow="Gemini + Resend" title="AI Patient Summary" icon={<MailIcon />} accent="steel">
+    <SectionCard
+      eyebrow="Gemini + Resend"
+      title="AI Patient Summary"
+      icon={<MailIcon />}
+      accent="steel"
+      disclaimer="AI-generated clinical summary, not a diagnosis - review before acting on it."
+    >
       <p className="text-sm text-ink/60 mb-3">
         Generates a plain-English clinical summary of the last 30 days and emails it to you.
       </p>

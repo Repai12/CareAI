@@ -34,7 +34,13 @@ export default function ReportAnalyzerPanel({
   }
 
   return (
-    <SectionCard eyebrow="Feature 2 · Groq API LIVE" title="AI Health Report Analyzer" icon={<DocumentSearchIcon />} accent="gold">
+    <SectionCard
+      eyebrow="Feature 2 · Groq API LIVE"
+      title="AI Health Report Analyzer"
+      icon={<DocumentSearchIcon />}
+      accent="gold"
+      disclaimer="AI-generated summary, not a diagnosis. Always confirm findings with a doctor."
+    >
       {isOwner && (
         <div className="flex items-center gap-2 mb-4">
           <input ref={fileInput} type="file" accept="application/pdf" className="text-sm text-ink/70 flex-1" />
