@@ -24,8 +24,18 @@ export interface CareLink {
   revoked_at: string | null;
 }
 
+export interface MyPatient {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  // Only ever set on a patient's own record - null on the User rows
+  // returned for family/doctor viewers themselves (they don't have one).
+  patient_code: string | null;
+}
+
 export function getMyPatients() {
-  return apiFetch(`/me/patients`) as Promise<{ id: string; name: string; email: string; role: string }[]>;
+  return apiFetch(`/me/patients`) as Promise<MyPatient[]>;
 }
 
 export function getMyConnections() {

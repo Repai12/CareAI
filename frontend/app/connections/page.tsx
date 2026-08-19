@@ -8,6 +8,7 @@ import {
   declineConnection,
   revokeConnection,
   updateConnectionPermission,
+  getMyPatients,
   type CareLink,
 } from "@/lib/api/me";
 import { getMyRole } from "@/lib/apiClient";
@@ -23,6 +24,8 @@ export default function ConnectionsPage() {
   const router = useRouter();
   const [role, setRole] = useState<string | null>(null);
   const [links, setLinks] = useState<CareLink[]>([]);
+  const [myCode, setMyCode] = useState<string | null>(null);
+  const [codeCopied, setCodeCopied] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actingOn, setActingOn] = useState<string | null>(null);
@@ -36,9 +39,27 @@ export default function ConnectionsPage() {
   }
 
   useEffect(() => {
-    setRole(getMyRole());
+    const r = getMyRole();
+    setRole(r);
     load();
+    // The code is only ever shown once, at registration - if it's lost,
+    // there was previously no way to look it up again to share with a
+    // new family member/doctor. getMyPatients() for a patient returns
+    // [self], which carries their own patient_code.
+    if (r === "patient") {
+      getMyPatients()
+        .then((mine) => setMyCode(mine[0]?.patient_code ?? null))
+        .catch(() => {});
+    }
   }, []);
+
+  function copyCode() {
+    if (!myCode) return;
+    navigator.clipboard.writeText(myCode).then(() => {
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2000);
+    });
+  }
 
   async function act(linkId: string, action: () => Promise<CareLink>) {
     setActingOn(linkId);
@@ -70,6 +91,24 @@ export default function ConnectionsPage() {
             : "Patients you've asked to connect with, and whether they've approved it yet."}
         </p>
       </header>
+
+      {isPatient && myCode && (
+        <div className="mb-8 bg-white border border-sageLight rounded-xl p-4 flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-ink/40 font-semibold mb-1">Your patient code</p>
+            <p className="text-2xl font-display font-bold text-sage tracking-wide">{myCode}</p>
+            <p className="text-xs text-ink/50 mt-1">
+              Share this with family or your doctor - they enter it when they register to request a connection.
+            </p>
+          </div>
+          <button
+            onClick={copyCode}
+            className="text-xs font-medium text-sage border border-sageLight rounded-full px-4 py-2 hover:bg-sageLight transition shrink-0"
+          >
+            {codeCopied ? "Copied!" : "Copy code"}
+          </button>
+        </div>
+      )}
 
       {error && <p className="text-alert text-sm mb-4">{error}</p>}
       {loading && <p className="text-ink/50 text-sm">Loading...</p>}

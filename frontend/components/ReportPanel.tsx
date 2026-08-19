@@ -8,9 +8,12 @@ import { WeeklyReportOut, triggerWeeklyReport } from "@/lib/api";
 export default function ReportPanel({
   patientId,
   initialHistory,
+  canTrigger,
 }: {
   patientId: string;
   initialHistory: WeeklyReportOut[];
+  /** Backend only allows the patient themselves or a linked doctor to trigger a send (routers/reports.py) - family is read-only here, same as everywhere else. */
+  canTrigger: boolean;
 }) {
   const [history, setHistory] = useState(initialHistory);
   const [loading, setLoading] = useState(false);
@@ -31,13 +34,15 @@ export default function ReportPanel({
 
   return (
     <SectionCard eyebrow="Resend" title="Weekly Email Health Report" icon={<MailIcon />} accent="sage">
-      <button
-        onClick={handleSendNow}
-        disabled={loading}
-        className="bg-sage text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-sage/90 disabled:opacity-50 transition"
-      >
-        {loading ? "Sending..." : "Send report now"}
-      </button>
+      {canTrigger && (
+        <button
+          onClick={handleSendNow}
+          disabled={loading}
+          className="bg-sage text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-sage/90 disabled:opacity-50 transition"
+        >
+          {loading ? "Sending..." : "Send report now"}
+        </button>
+      )}
 
       {error && <p className="text-alert text-sm mt-2">{error}</p>}
 
