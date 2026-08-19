@@ -7,7 +7,7 @@ model file, add its import here too.
 """
 from app.models.user import User, UserRole, CareLink, CareLinkStatus, CareLinkPermission, RefreshToken
 from app.models.vitals import VitalsLog
-from app.models.medication import Medication, Appointment
+from app.models.medication import Medication, Appointment, MedicationLog, MedicationLogStatus, VisitNote
 from app.models.email_log import EmailLog
 from app.models.emergency import EmergencyContact
 from app.models.fall_incident import FallIncident

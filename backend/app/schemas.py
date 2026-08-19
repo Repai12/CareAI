@@ -371,20 +371,18 @@ class CalendarEventResponse(BaseModel):
 # MEMBER 2 — MEDICATION LOG / ADHERENCE
 # ============================================================
 
-class MedicationLogBase(BaseModel):
-    medication_id: UUID
-    scheduled_at: datetime
-    taken_at: Optional[datetime] = None
-    status: Optional[str] = None
-
-
 class MedicationLogCreate(BaseModel):
     medication_id: UUID
     scheduled_at: datetime
 
 
-class MedicationLogResponse(MedicationLogBase):
-    id: int  # medication_logs.id is a plain autoincrement integer, not UUID
+class MedicationLogResponse(BaseModel):
+    id: UUID
+    medication_id: UUID
+    patient_id: UUID
+    scheduled_at: datetime
+    taken_at: Optional[datetime] = None
+    status: str
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -403,17 +401,14 @@ class MedicationAdherenceResponse(BaseModel):
 # MEMBER 2 — DOCTOR VISIT HISTORY / PRESCRIPTION NOTES
 # ============================================================
 
-class VisitNoteBase(BaseModel):
-    patient_name: str
-    doctor_name: str
+class VisitNoteCreate(BaseModel):
+    # patient_id comes from the URL path, not the body; patient_name/
+    # doctor_name are always filled in server-side from the real
+    # patient/doctor records, never trusted from client input.
     appointment_id: Optional[UUID] = None
     visit_date: date
     notes: str
     prescription: Optional[str] = None
-
-
-class VisitNoteCreate(VisitNoteBase):
-    pass
 
 
 class VisitNoteUpdate(BaseModel):
@@ -421,8 +416,16 @@ class VisitNoteUpdate(BaseModel):
     prescription: Optional[str] = None
 
 
-class VisitNoteResponse(VisitNoteBase):
-    id: int  # visit_notes.id is a plain autoincrement integer, not UUID
+class VisitNoteResponse(BaseModel):
+    id: UUID
+    patient_id: UUID
+    patient_name: str
+    doctor_id: UUID
+    doctor_name: str
+    appointment_id: Optional[UUID] = None
+    visit_date: date
+    notes: str
+    prescription: Optional[str] = None
     status: str
     created_at: datetime
     updated_at: datetime

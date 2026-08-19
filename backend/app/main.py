@@ -35,6 +35,8 @@ from app.routers import fall_incidents as fall_incidents_router
 from app.routers import safety_checkin as safety_checkin_router
 from app import appointments as appointments_router
 from app import calendar as calendar_router
+from app import medication_logs as medication_logs_router
+from app import visit_notes as visit_notes_router
 
 from app.services.scheduler import start_scheduler
 
@@ -71,6 +73,8 @@ app.include_router(appointments_router.router)
 # depend on this (see appointments.py/crud.py - Calendar sync is
 # best-effort), this just exposes the connect/status/events endpoints.
 app.include_router(calendar_router.router)
+app.include_router(medication_logs_router.router)
+app.include_router(visit_notes_router.router)
 app.include_router(dashboard.router)
 app.include_router(notifications.router)
 app.include_router(reports.router)
