@@ -61,12 +61,22 @@ def _fetch_latest_vitals(patient_id: uuid.UUID):
 
 
 def _fetch_active_medications(patient_id: uuid.UUID):
-    # NOTE: Afifa's migration (5c905c544fa2) dropped patient_id/active from
-    # medications entirely - there's currently no column linking a
-    # medication row to a specific patient. Returning an empty list rather
-    # than guessing/leaking another patient's medications; revisit once
-    # medications have a real patient linkage again.
-    return []
+    db = SessionLocal()
+    try:
+        today = date.today()
+        return (
+            db.query(Medication)
+            .filter(
+                Medication.patient_id == patient_id,
+                # "Active" = started (or no start date given) and not yet ended.
+                (Medication.start_date.is_(None)) | (Medication.start_date <= today),
+                (Medication.end_date.is_(None)) | (Medication.end_date >= today),
+            )
+            .order_by(Medication.start_date.desc().nullslast())
+            .all()
+        )
+    finally:
+        db.close()
 
 
 def _fetch_upcoming_appointments(patient_email: str):
