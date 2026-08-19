@@ -74,12 +74,25 @@ description of what happened. Staging file-by-file (no wildcards) going forward 
     backend always returns uppercase `"SENT"`/`"FAILED"`, so a successful send silently rendered in
     the failure color. Added a 24h duplicate-send guard (doesn't block retrying failed attempts).
 
+12. **Role-appropriate dashboards + connections polish** (`b44b930`) — the connections mechanism
+    itself (care_links, invite/approve) was already solid; this closed the "who sees what" gaps
+    around it. `ReportPanel` showed "Send report now" to family, who the backend has always
+    rejected with a 403 — hidden now. Patient dashboard had no version of README S5's "no linked
+    family/doctor yet" nudge banner — added, verified both the zero-link and has-link cases live.
+    The patient's own `patient_code` was only ever shown once at registration with no way to look
+    it up again — now persistent on `/connections` with a working copy button. `/patients` (the
+    landing page for a family/doctor with 2+ linked patients) was a bare name list — upgraded to
+    README S2's actual spec: latest vitals status, unread notification count, next appointment per
+    patient, sorted with unread-EMERGENCY patients first. Also fixed two supporting gaps hit along
+    the way: `lib/api/notifications.ts` was never in the `lib/api.ts` barrel export, and
+    `getMyPatients()`'s frontend type was missing `patient_code` despite the backend returning it.
+
 **Not yet done**: frontend route restructuring (`/patient/*`, `/family/*`, `/doctor/*` — the current
 shared-page-with-role-checks approach works correctly, this is organizational/cosmetic, not a
 functional gap), visual/interaction polish pass, persistent doctor-unverified badge (currently only
-shown once at registration), SOS's 3-second cancel window + rapid-repeat rate limiting, "no linked
-family/doctor yet" dashboard nudge banner, and cleanup of unused mismatched-style component files
-(`MedicationForm/Table`, `AppointmentForm/Table`, `VisitNoteForm/History`). Google Calendar OAuth is
+shown once at registration), SOS's 3-second cancel window + rapid-repeat rate limiting, and cleanup
+of unused mismatched-style component files (`MedicationForm/Table`, `AppointmentForm/Table`,
+`VisitNoteForm/History`). Google Calendar OAuth is
 wired in but unverified beyond "doesn't crash the app" — nobody has real Google Cloud OAuth
 credentials to test the actual flow against.
 
