@@ -17,4 +17,5 @@ export * from "./api/reports";
 export * from "./api/me";
 export * from "./api/vitals";
 export * from "./api/medications";
+export * from "./api/appointments";
 export * from "./api/emergency";
