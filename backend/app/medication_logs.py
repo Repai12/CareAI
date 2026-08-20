@@ -136,7 +136,7 @@ def list_medication_logs(
     return query.order_by(MedicationLog.scheduled_at.desc()).all()
 
 
-def _check_missed_streak(db: Session, medication: Medication, log: MedicationLog):
+def check_missed_streak(db: Session, medication: Medication, log: MedicationLog):
     """Notifies only once a medication has MISSED_STREAK_ALERT_THRESHOLD consecutive misses."""
     recent = (
         db.query(MedicationLog)
@@ -198,7 +198,7 @@ def mark_missed(
     db.refresh(log)
 
     medication = db.query(Medication).filter(Medication.id == log.medication_id).first()
-    _check_missed_streak(db, medication, log)
+    check_missed_streak(db, medication, log)
 
     return log
 

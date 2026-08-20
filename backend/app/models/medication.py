@@ -87,6 +87,10 @@ class MedicationLog(Base):
     scheduled_at = Column(DateTime, nullable=False)
     taken_at = Column(DateTime, nullable=True)
     status = Column(String, nullable=False, default=MedicationLogStatus.pending.value)
+    # Set once the "time to take X" notification fires (see
+    # services/medication_reminder_service.py) so the scheduled job
+    # doesn't re-notify the same dose on every tick.
+    reminder_sent_at = Column(DateTime, nullable=True)
 
 
 class VisitNote(Base):
