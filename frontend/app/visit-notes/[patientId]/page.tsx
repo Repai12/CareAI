@@ -7,6 +7,7 @@ import {
   createVisitNote,
   updateVisitNote,
   archiveVisitNote,
+  summarizeVisitNote,
   type VisitNoteOut,
   type VisitNoteInput,
 } from "@/lib/api";
@@ -30,6 +31,8 @@ export default function VisitNotesPage() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState({ notes: "", prescription: "" });
+  const [summarizingId, setSummarizingId] = useState<string | null>(null);
+  const [summaryError, setSummaryError] = useState<Record<string, string>>({});
 
   function load() {
     setLoading(true);
@@ -76,6 +79,19 @@ export default function VisitNotesPage() {
       setEditingId(null);
     } catch (e: any) {
       setError(e.message || "Couldn't update that note.");
+    }
+  }
+
+  async function handleSummarize(noteId: string) {
+    setSummarizingId(noteId);
+    setSummaryError((prev) => ({ ...prev, [noteId]: "" }));
+    try {
+      const updated = await summarizeVisitNote(patientId, noteId);
+      setNotes((prev) => prev.map((n) => (n.id === noteId ? updated : n)));
+    } catch (e: any) {
+      setSummaryError((prev) => ({ ...prev, [noteId]: e.message || "AI explanation unavailable right now." }));
+    } finally {
+      setSummarizingId(null);
     }
   }
 
@@ -193,6 +209,24 @@ export default function VisitNotesPage() {
                 <>
                   <p className="text-sm text-ink mt-2">{note.notes}</p>
                   {note.prescription && <p className="text-xs text-ink/50 mt-1">Rx: {note.prescription}</p>}
+
+                  {note.ai_summary ? (
+                    <div className="mt-3 bg-gold/10 border border-gold/30 rounded-lg p-3">
+                      <p className="text-xs text-ink/40 italic mb-1">
+                        AI-generated explanation, not a diagnosis - review before acting on it.
+                      </p>
+                      <p className="text-sm text-ink">{note.ai_summary}</p>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleSummarize(note.id)}
+                      disabled={summarizingId === note.id}
+                      className="text-xs font-medium text-gold border border-gold/30 rounded-full px-3 py-1.5 mt-3 hover:bg-gold/10 disabled:opacity-50 transition"
+                    >
+                      {summarizingId === note.id ? "Explaining..." : "Explain in plain English"}
+                    </button>
+                  )}
+                  {summaryError[note.id] && <p className="text-alert text-xs mt-1">{summaryError[note.id]}</p>}
                 </>
               )}
             </li>

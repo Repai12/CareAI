@@ -18,6 +18,18 @@ already be covered by `VisitNote.notes` - not a real gap.)
     the same history read-only with the picker correctly hidden (`isOwner` gate). Multiple
     entries/day allowed on purpose - a real user checks in more than once.
 
+15. **AI Prescription Summarizer** (Module 3) - extends the existing Visit Notes feature rather
+    than duplicating it: added a cached `ai_summary` column to `visit_notes`, a new `POST
+    /visit-notes/{patient_id}/{visit_note_id}/summarize` endpoint (patient + active-linked
+    family/doctor, not doctor-only - this is for the layperson audience), and a
+    `summarize_prescription()` helper reusing `groq_health_service.py`'s existing Groq client. An
+    "Explain in plain English" button appears on every visit note; the summary is generated once
+    and cached, not regenerated on every page view. Verified live against the real (keyless) dev
+    environment: clicking the button surfaces "AI explanation is temporarily unavailable" via a
+    503, not a crash, and the button stays clickable for a retry rather than caching a null
+    result - confirms the graceful-degradation path works even though the happy path (an actual
+    Groq key) is untested here, same limitation as the AI Symptom Checker/Diet Advisor before it.
+
 
 Fixed and verified live (real DB + real browser sessions), on branch `fix/stabilize-and-polish`:
 

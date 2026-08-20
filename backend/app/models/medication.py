@@ -110,5 +110,8 @@ class VisitNote(Base):
     notes = Column(Text, nullable=False)
     prescription = Column(Text, nullable=True)
     status = Column(String, nullable=False, default="active")  # active | archived
+    # AI Prescription Summarizer (README Features table) - cached plain-
+    # English explanation, generated on demand, not on every write.
+    ai_summary = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow)

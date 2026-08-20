@@ -27,6 +27,7 @@ from .models.user import User, UserRole, CareLink, CareLinkStatus, CareLinkPermi
 from .models.medication import Appointment, VisitNote
 from .models.notification import NotificationCategory
 from .services.notification_service import create_notification
+from .services.groq_health_service import summarize_prescription
 from .schemas import VisitNoteCreate, VisitNoteUpdate, VisitNoteResponse
 
 router = APIRouter(prefix="/visit-notes", tags=["Doctor Visit History"])
@@ -194,6 +195,39 @@ def update_visit_note(
         note.prescription = payload.prescription
 
     note.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(note)
+    return note
+
+
+@router.post("/{patient_id}/{visit_note_id}/summarize", response_model=VisitNoteResponse)
+def summarize_visit_note(
+    patient_id: UUID,
+    visit_note_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """AI Prescription Summarizer (README Features table). Open to the
+    patient and any actively-linked family/doctor - this is for the
+    layperson audience, not doctor-only. Cached on the note so it's not
+    regenerated (and doesn't burn a new Groq call) on every page view."""
+    _assert_can_view(patient_id, current_user, db)
+    note = (
+        db.query(VisitNote)
+        .filter(VisitNote.id == visit_note_id, VisitNote.patient_id == patient_id, VisitNote.status == "active")
+        .first()
+    )
+    if note is None:
+        raise HTTPException(404, "Visit note not found.")
+
+    if note.ai_summary:
+        return note
+
+    summary = summarize_prescription(note.notes, note.prescription)
+    if summary is None:
+        raise HTTPException(503, "AI explanation is temporarily unavailable. Please try again shortly.")
+
+    note.ai_summary = summary
     db.commit()
     db.refresh(note)
     return note
