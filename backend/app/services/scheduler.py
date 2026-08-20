@@ -22,11 +22,13 @@ need for retry queues grew significantly.
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 
 from app.database import SessionLocal
 from app.models.user import User, UserRole
 from app.services.report_service import generate_weekly_report
 from app.services.daily_digest_service import run_daily_digest
+from app.services.medication_reminder_service import run_medication_reminders
 from app.routers.safety_checkin import check_missed_checkins
 
 scheduler = BackgroundScheduler()
@@ -65,6 +67,16 @@ def run_daily_digest_job():
         db.close()
 
 
+def run_medication_reminder_job():
+    db = SessionLocal()
+    try:
+        run_medication_reminders(db)
+    except Exception as e:
+        print(f"[scheduler] Medication reminder job failed: {e}")
+    finally:
+        db.close()
+
+
 def start_scheduler():
     scheduler.add_job(
         run_weekly_reports_for_all_patients,
@@ -86,6 +98,15 @@ def start_scheduler():
         # activity has already happened.
         CronTrigger(hour=20, minute=0),
         id="daily_digest_job",
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        run_medication_reminder_job,
+        # Every 15 minutes, not once a day like the other jobs - a
+        # medication reminder is time-of-day specific, not a once-daily
+        # rollup.
+        IntervalTrigger(minutes=15),
+        id="medication_reminder_job",
         replace_existing=True,
     )
     scheduler.start()

@@ -278,6 +278,23 @@ for how that gap was found. Every README-listed feature now has real, live-verif
     (no recommendation generated yet) round-trips correctly through FastAPI's `X | None` response
     model.
 
+25. **Medicine Reminder & Adherence Tracker: closed the "never actually automated" gap** — a
+    corner-case check found that scheduling a reminder only ever created a `pending`
+    `MedicationLog` row; nothing ever reminded the patient when it came due, and nothing ever
+    transitioned an ignored reminder to `missed`. That meant the tracker's own "3 consecutive
+    misses triggers a notification" logic (built in phase 6) could **never fire on its own** - it
+    required a human to manually click "Missed" on every single overdue dose first, which defeats
+    the point of an *automated* adherence tracker entirely. Added a new scheduler job (every 15
+    minutes, not once-daily like the other jobs - a reminder is time-of-day specific) that: fires
+    one in-app "time to take X" notification per dose the moment it's due (guarded by a new
+    `reminder_sent_at` column so it never re-notifies the same dose), and auto-marks a dose
+    `missed` if it's still `pending` 2 hours after its scheduled time, which then correctly feeds
+    the existing streak check. Factored the streak-check helper out of `medication_logs.py`
+    (dropped its leading underscore - it's now genuinely cross-module) rather than duplicating the
+    query. Verified live via direct script calls: due-now reminder fires once and is idempotent on
+    a second run, an overdue dose auto-transitions to `missed`, and three such misses in a row
+    correctly fire the "3 consecutive misses" notification fully automatically for the first time.
+
 **Not yet done**: frontend route restructuring (`/patient/*`, `/family/*`, `/doctor/*` — the current
 shared-page-with-role-checks approach works correctly, this is organizational, not a functional
 gap). Google Calendar OAuth is wired in but unverified beyond "doesn't crash the app" — nobody has real Google
