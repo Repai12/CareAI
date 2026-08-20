@@ -5,8 +5,9 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { getVitalsHistory, getHealthReports, getSymptomLogs, getLatestDietPlan } from "@/lib/api/vitals";
 import { getMoodHistory } from "@/lib/api/mood";
+import { getActivityHistory } from "@/lib/api/activity";
 import HealthNav from "../_components/HealthNav";
-import { ClipboardIcon, DocumentSearchIcon, StethoscopeIcon, LeafIcon, SmileIcon } from "../_components/icons";
+import { ClipboardIcon, DocumentSearchIcon, StethoscopeIcon, LeafIcon, SmileIcon, ActivityIcon } from "../_components/icons";
 
 function getMyRole(): string | null {
   if (typeof window === "undefined") return null;
@@ -30,6 +31,8 @@ export default function HealthOverviewPage() {
     adherenceRate: number | null;
     moodCount: number;
     latestMood: string | null;
+    activityCount: number;
+    activityMinutesThisWeek: number;
   } | null>(null);
 
   useEffect(() => {
@@ -42,8 +45,10 @@ export default function HealthOverviewPage() {
       getSymptomLogs(patientId),
       getLatestDietPlan(patientId),
       getMoodHistory(patientId),
+      getActivityHistory(patientId),
     ])
-      .then(([vitals, reports, symptoms, diet, moods]) => {
+      .then(([vitals, reports, symptoms, diet, moods, activity]) => {
+        const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
         setSummary({
           vitalsCount: vitals.length,
           latestVitals: vitals[0] ? `BP ${vitals[0].blood_pressure} · Sugar ${vitals[0].sugar_level}` : null,
@@ -54,6 +59,10 @@ export default function HealthOverviewPage() {
           adherenceRate: diet.adherence_rate,
           moodCount: moods.length,
           latestMood: moods[0]?.mood ?? null,
+          activityCount: activity.length,
+          activityMinutesThisWeek: activity
+            .filter((a) => new Date(a.logged_at).getTime() >= weekAgo)
+            .reduce((sum, a) => sum + a.duration_minutes, 0),
         });
         setLoaded(true);
       })
@@ -123,6 +132,16 @@ export default function HealthOverviewPage() {
       detail: summary.moodCount > 0
         ? `${summary.moodCount} ${summary.moodCount === 1 ? "entry" : "entries"} logged · latest: ${summary.latestMood}`
         : "No mood logged yet",
+    },
+    {
+      href: `/health/${patientId}/activity`,
+      icon: ActivityIcon,
+      accent: "text-steel bg-steel/10",
+      eyebrow: "Module 1 · Activity Tracking",
+      title: "Activity Tracking",
+      detail: summary.activityCount > 0
+        ? `${summary.activityMinutesThisWeek} min this week · ${summary.activityCount} total entries`
+        : "No activity logged yet",
     },
   ];
 

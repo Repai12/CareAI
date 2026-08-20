@@ -467,6 +467,32 @@ class MoodLogOut(BaseModel):
 
 
 # ============================================================
+# ACTIVITY TRACKING (Module 1)
+# ============================================================
+
+class ActivityLogCreate(BaseModel):
+    activity_type: str  # ActivityType value: walk/exercise/chores/other
+    duration_minutes: int
+    note: Optional[str] = None
+
+
+class ActivityLogUpdate(BaseModel):
+    activity_type: Optional[str] = None
+    duration_minutes: Optional[int] = None
+    note: Optional[str] = None
+
+
+class ActivityLogOut(BaseModel):
+    id: uuid.UUID
+    activity_type: str
+    duration_minutes: int
+    note: Optional[str] = None
+    logged_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ============================================================
 # AI PATIENT HISTORY Q&A (Module 3, doctor-only)
 # ============================================================
 

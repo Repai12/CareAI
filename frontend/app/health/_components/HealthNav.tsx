@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ClipboardIcon, DocumentSearchIcon, StethoscopeIcon, LeafIcon, SmileIcon } from "./icons";
+import { ClipboardIcon, DocumentSearchIcon, StethoscopeIcon, LeafIcon, SmileIcon, ActivityIcon } from "./icons";
 import LogoutButton from "@/components/LogoutButton";
 
 const TABS = [
@@ -9,6 +9,7 @@ const TABS = [
   { segment: "symptoms", label: "Symptom Checker", icon: StethoscopeIcon },
   { segment: "diet", label: "Diet Advisor", icon: LeafIcon },
   { segment: "mood", label: "Mood", icon: SmileIcon },
+  { segment: "activity", label: "Activity", icon: ActivityIcon },
 ];
 
 export default function HealthNav({ patientId, current }: { patientId: string; current: string }) {

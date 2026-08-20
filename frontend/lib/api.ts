@@ -26,3 +26,4 @@ export * from "./api/mood";
 export * from "./api/patientQa";
 export * from "./api/companion";
 export * from "./api/chat";
+export * from "./api/activity";
