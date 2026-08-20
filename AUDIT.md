@@ -295,6 +295,43 @@ for how that gap was found. Every README-listed feature now has real, live-verif
     a second run, an overdue dose auto-transitions to `missed`, and three such misses in a row
     correctly fire the "3 consecutive misses" notification fully automatically for the first time.
 
+26. **Real external API testing (user provided Resend + Gemini keys)** — every AI/email feature
+    had only ever been verified in graceful-degradation mode. With real keys, found and fixed
+    three genuine bugs the fallback path had been silently hiding:
+    - `gemini-1.5-flash` (the hardcoded model name in `ai_summary_service.py`) is fully retired -
+      real call returned a 404. Switched to `gemini-flash-latest`, a stable alias Google maintains,
+      specifically so a future model retirement doesn't silently break this again.
+    - Both the Doctor AI Summary and the Weekly Report were confidently telling recipients "no
+      active medications" for a patient who has two on file. Root cause: both services still had
+      a `meds = []` hardcode with a comment claiming `Medication.patient_id` didn't exist -true
+      when originally written, but stale ever since migration `56b76de96e84` added it back in
+      phase 5. Fixed both to actually query it, and threaded medication count into the Weekly
+      Report's AI narrative prompt too. This is a real clinical-accuracy bug that unit-testing the
+      graceful-failure path could never have caught - it only surfaced once real AI output was
+      actually read closely.
+    - Confirmed real Resend delivery works end-to-end (registration verification email received
+      and successfully clicked-through), and confirmed the free-tier sandbox restriction (can only
+      deliver to the account's own verified address without a verified domain) behaves as
+      documented rather than silently failing.
+
+    While testing the verification-resend flow, also found and fixed a real, live, user-facing
+    bug unrelated to the new keys: clicking a **freshly working** verification link showed
+    "Verification failed" due to React Strict Mode double-invoking the page's mount effect against
+    a single-use server-side token - the first of the two calls succeeded, but the second (fired a
+    moment later) hit the now-consumed token and its error was what actually landed in state. A
+    real user clicking their real email link would have seen this false failure. Fixed with a
+    `useRef` guard that stops the second call from ever going out (a plain cancellation flag isn't
+    enough here, unlike the earlier chat fix, because the underlying operation isn't idempotent).
+
+27. **Built the missing "resend verification email" flow** — the backend's own expired-link error
+    message already promised "or request a new one," but that endpoint never existed; a user whose
+    original email genuinely failed to send had no recourse (can't log in unverified, can't
+    re-register with the same email) and would be permanently stuck. Added `POST
+    /auth/resend-verification` (same enumeration-safe generic-response pattern as forgot-password),
+    wired a "Resend verification email" link into the login page's "please verify" error and a
+    proper resend form into the verify-email page's expired/invalid state. Verified live: a second
+    email was successfully sent and successfully consumed.
+
 **Not yet done**: frontend route restructuring (`/patient/*`, `/family/*`, `/doctor/*` — the current
 shared-page-with-role-checks approach works correctly, this is organizational, not a functional
 gap). Google Calendar OAuth is wired in but unverified beyond "doesn't crash the app" — nobody has real Google
