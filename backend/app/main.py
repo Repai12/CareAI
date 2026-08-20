@@ -31,6 +31,7 @@ from app.routers import (
     patient_qa,
     companion,
     chat,
+    activity,
 )
 from app.routers import vitals as vitals_router
 from app.routers import emergency as emergency_router
@@ -87,6 +88,7 @@ app.include_router(mood.router)
 app.include_router(patient_qa.router)
 app.include_router(companion.router)
 app.include_router(chat.router)
+app.include_router(activity.router)
 
 
 @app.on_event("startup")

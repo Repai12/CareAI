@@ -252,6 +252,19 @@ for how that gap was found. Every README-listed feature now has real, live-verif
       and re-ran (correctly created one notification with the right content, visible under both
       "All" and the new "Daily Digest" filter).
 
+23. **Activity Tracking** (Module 1: "Activity tracking with trend dashboards") — a third README
+    cross-check, this time re-reading Module 1 and 2 as carefully as Module 3, found this had
+    zero code anywhere (confirmed by grep - not even a stray mention). No wearable integration
+    exists in this app, so this is manual entry, same self-reported pattern as Mood/Vitals: patient
+    logs an activity type (walk/exercise/chores/other) + duration + optional note, multiple
+    entries/day allowed. New `ActivityLog` model/migration, `routers/activity.py` with edit/delete
+    included from the start (unlike Mood, which needed a follow-up fix for this same gap - learned
+    the lesson). "Trend dashboards" built as a 7-day daily-total-minutes bar chart using plain CSS
+    (no charting library in this project, matching Mood's dot-trend approach), plus a new Activity
+    tab in the Health module and an overview card. Verified live end-to-end as both patient
+    (logged an entry, watched the bar chart update, deleted it via the real UI button) and family
+    (confirmed read-only - no log form, history + chart only).
+
 **Not yet done**: frontend route restructuring (`/patient/*`, `/family/*`, `/doctor/*` — the current
 shared-page-with-role-checks approach works correctly, this is organizational, not a functional
 gap). Google Calendar OAuth is wired in but unverified beyond "doesn't crash the app" — nobody has real Google
