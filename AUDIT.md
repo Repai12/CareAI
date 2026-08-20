@@ -265,6 +265,19 @@ for how that gap was found. Every README-listed feature now has real, live-verif
     (logged an entry, watched the bar chart update, deleted it via the real UI button) and family
     (confirmed read-only - no log form, history + chart only).
 
+24. **Wellness Recommendation Engine** (Module 2: "wellness recommendation engine", listed as a
+    separate item from "nutrition planner" in the same Module 2 line - the Diet Advisor already
+    covers nutrition, this is the broader lifestyle counterpart). Zero code anywhere, confirmed
+    by grep. New `WellnessRecommendation` model/migration, `routers/wellness.py`, and
+    `generate_wellness_recommendations()` in `groq_health_service.py` - grounded in the patient's
+    real recent vitals, mood, and activity trends (now that all three exist) rather than generic
+    tips, same principle as the diet plan. New Wellness tab in the Health module, patient-only
+    "Get wellness tips" / "Refresh recommendations" button, family/doctor read-only. Verified live:
+    empty state renders correctly, generating in the keyless dev environment correctly surfaces a
+    503 "temporarily unavailable" instead of crashing, and the nullable `GET .../latest` response
+    (no recommendation generated yet) round-trips correctly through FastAPI's `X | None` response
+    model.
+
 **Not yet done**: frontend route restructuring (`/patient/*`, `/family/*`, `/doctor/*` — the current
 shared-page-with-role-checks approach works correctly, this is organizational, not a functional
 gap). Google Calendar OAuth is wired in but unverified beyond "doesn't crash the app" — nobody has real Google

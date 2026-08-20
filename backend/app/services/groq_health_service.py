@@ -468,6 +468,67 @@ Upcoming appointments: {appt_count}
     return _call_groq(prompt)
 
 
+def _recent_mood_context(db: Session, patient_id) -> str:
+    from app.models.mood import MoodLog  # local import - mood.py doesn't depend on this file
+
+    recent = (
+        db.query(MoodLog)
+        .filter(MoodLog.patient_id == patient_id)
+        .order_by(MoodLog.logged_at.desc())
+        .limit(7)
+        .all()
+    )
+    if not recent:
+        return "No mood entries logged recently."
+    return "; ".join(f"{m.mood}" + (f" ({m.note})" if m.note else "") for m in recent)
+
+
+def _recent_activity_context(db: Session, patient_id) -> str:
+    from app.models.activity import ActivityLog  # local import - activity.py doesn't depend on this file
+
+    recent = (
+        db.query(ActivityLog)
+        .filter(ActivityLog.patient_id == patient_id)
+        .order_by(ActivityLog.logged_at.desc())
+        .limit(7)
+        .all()
+    )
+    if not recent:
+        return "No activity logged recently."
+    total_minutes = sum(a.duration_minutes for a in recent)
+    return f"{len(recent)} entries in the last week totaling {total_minutes} minutes ({', '.join(a.activity_type for a in recent)})."
+
+
+def generate_wellness_recommendations(db: Session, patient_id) -> dict:
+    """Wellness Recommendation Engine (README Features table, Module 2) -
+    listed separately from the nutrition planner (Diet Advisor), so this
+    is deliberately broader: sleep/activity/stress/social tips, not meal
+    plans. Grounded in the patient's real recent vitals/mood/activity,
+    same "real data, not generic" principle as the diet plan. Returns
+    {based_on_summary, recommendations}; recommendations is None (never
+    raises) if Groq is unavailable, same graceful-degradation pattern as
+    every AI feature in this file."""
+
+    vitals_trend = _recent_vitals_context(db, patient_id)
+    mood_trend = _recent_mood_context(db, patient_id)
+    activity_trend = _recent_activity_context(db, patient_id)
+    based_on_summary = f"Vitals: {vitals_trend} | Mood: {mood_trend} | Activity: {activity_trend}"
+
+    prompt = f"""
+You are a wellness advisor for an elderly patient. Based ONLY on the real
+recent data below, give 3-5 short, practical, encouraging lifestyle tips
+(sleep, gentle activity, stress, social connection, hydration - NOT meal
+plans, that's a separate feature). Plain English, one tip per line, no
+numbering needed. Not a doctor - never diagnose, always suggest checking
+with their doctor for anything medical.
+
+Recent vitals: {vitals_trend}
+Recent mood: {mood_trend}
+Recent activity: {activity_trend}
+"""
+    return {"based_on_summary": based_on_summary, "recommendations": _call_groq(prompt)}
+
+
 def companion_reply(db: Session, patient_id, persona: str, history: list, message: str) -> str | None:
     """Returns the companion's reply, or None (never raises) if Groq is
     unavailable. `history` is this persona's own prior turns as

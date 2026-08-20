@@ -59,3 +59,12 @@ export function ActivityIcon({ className = "w-5 h-5" }: { className?: string }) 
     </svg>
   );
 }
+
+export function SparkleIcon({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18" />
+      <circle cx="12" cy="12" r="2.5" />
+    </svg>
+  );
+}
