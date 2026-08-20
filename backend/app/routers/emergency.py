@@ -15,6 +15,8 @@ than left to "should work":
   and doctor's flagged list even if Twilio is down entirely.
 """
 
+import threading
+import time
 import uuid
 from typing import List
 
@@ -127,44 +129,102 @@ def _send_sms_batch(phone_numbers: list[str], message: str) -> tuple[list[str], 
     return delivered, failed
 
 
+# Rapid-repeat guard: an anxious user (or a child, or a stuck/mashed
+# button) tapping SOS several times in a few seconds shouldn't fire off
+# a fresh SMS batch and a fresh notification-feed entry every single
+# time - that's alarming noise for family/doctor, not more safety. This
+# deliberately does NOT block a genuine second emergency a few minutes
+# later, or even a deliberate retry after the cooldown - it only
+# collapses truly rapid repeats into the original result. In-memory,
+# same simple pattern as auth.py's login rate limiter - fine for this
+# project's single-process deployment.
+#
+# _sos_lock guards against two nearly-simultaneous requests (e.g. a
+# double-click, or two browser tabs on the same account) both reading
+# "no cooldown yet" before either has written its claim - without the
+# lock, both slip through and each sends its own SMS batch + creates
+# its own notification, exactly the noise this guard exists to prevent.
+# The slot is claimed (result=None) *before* the actual send/notify
+# work, not after, so a request arriving mid-send still sees it.
+_SOS_COOLDOWN_SECONDS = 10
+_recent_sos: dict[str, dict] = {}
+_sos_lock = threading.Lock()
+
+
 @router.post("/sos", status_code=status.HTTP_200_OK)
 def trigger_sos(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    contacts = db.query(EmergencyContact).filter(
-        EmergencyContact.user_id == current_user.id
-    ).order_by(EmergencyContact.priority.asc()).all()
+    now = time.time()
+    uid = str(current_user.id)
+    with _sos_lock:
+        cached = _recent_sos.get(uid)
+        if cached and now - cached["at"] < _SOS_COOLDOWN_SECONDS:
+            if cached["result"] is not None:
+                seconds_ago = int(now - cached["at"])
+                return {
+                    **cached["result"],
+                    "message": f"SOS already triggered {seconds_ago}s ago - your contacts have already been notified.",
+                    "already_sent": True,
+                }
+            # An identical request is still mid-flight (claimed a moment
+            # ago, hasn't finished sending yet) - don't start a second
+            # SMS batch, just acknowledge it's already happening.
+            return {
+                "status": "success",
+                "message": "Your SOS is already being sent.",
+                "delivered_to": [],
+                "failed_to": [],
+                "already_sent": True,
+            }
+        _recent_sos[uid] = {"at": now, "result": None}
 
-    phone_numbers = [c.phone for c in contacts if c.phone]
-    sms_message = f"EMERGENCY SOS ALERT! {current_user.name or current_user.email} needs immediate assistance!"
+    try:
+        contacts = db.query(EmergencyContact).filter(
+            EmergencyContact.user_id == current_user.id
+        ).order_by(EmergencyContact.priority.asc()).all()
 
-    # The event always logs and always notifies linked family/doctor,
-    # even with zero contacts or a total Twilio outage - the UI should
-    # already have nudged the patient to add contacts (README S6.3), but
-    # a real emergency must never silently notify nobody just because
-    # that nudge was ignored.
-    delivered, failed = _send_sms_batch(phone_numbers, sms_message) if phone_numbers else ([], [])
+        phone_numbers = [c.phone for c in contacts if c.phone]
+        sms_message = f"EMERGENCY SOS ALERT! {current_user.name or current_user.email} needs immediate assistance!"
 
-    if not phone_numbers:
-        delivery_note = "No emergency contacts on file - no SMS could be sent."
-    elif failed:
-        delivery_note = f"SMS delivered to {len(delivered)}/{len(phone_numbers)} contacts. Failed: {len(failed)}."
-    else:
-        delivery_note = f"SMS delivered to all {len(delivered)} contacts."
+        # The event always logs and always notifies linked family/doctor,
+        # even with zero contacts or a total Twilio outage - the UI should
+        # already have nudged the patient to add contacts (README S6.3), but
+        # a real emergency must never silently notify nobody just because
+        # that nudge was ignored.
+        delivered, failed = _send_sms_batch(phone_numbers, sms_message) if phone_numbers else ([], [])
 
-    create_notification(
-        db,
-        patient_id=current_user.id,
-        event_type="SOS_TRIGGERED",
-        title="SOS alert triggered",
-        message=f"{current_user.name} triggered an emergency SOS. {delivery_note}",
-        category=NotificationCategory.emergency,
-    )
+        if not phone_numbers:
+            delivery_note = "No emergency contacts on file - no SMS could be sent."
+        elif failed:
+            delivery_note = f"SMS delivered to {len(delivered)}/{len(phone_numbers)} contacts. Failed: {len(failed)}."
+        else:
+            delivery_note = f"SMS delivered to all {len(delivered)} contacts."
 
-    return {
-        "status": "success",
-        "message": f"SOS Alert processed for {len(phone_numbers)} contacts",
-        "delivered_to": delivered,
-        "failed_to": failed,
-    }
+        create_notification(
+            db,
+            patient_id=current_user.id,
+            event_type="SOS_TRIGGERED",
+            title="SOS alert triggered",
+            message=f"{current_user.name} triggered an emergency SOS. {delivery_note}",
+            category=NotificationCategory.emergency,
+        )
+
+        result = {
+            "status": "success",
+            "message": f"SOS Alert processed for {len(phone_numbers)} contacts",
+            "delivered_to": delivered,
+            "failed_to": failed,
+            "already_sent": False,
+        }
+        with _sos_lock:
+            _recent_sos[uid] = {"at": now, "result": result}
+        return result
+    except Exception:
+        # Something failed mid-send (DB error, unexpected exception) -
+        # release the claim so a retry isn't stuck being told "already
+        # sent" for a request that never actually completed.
+        with _sos_lock:
+            _recent_sos.pop(uid, None)
+        raise
