@@ -497,3 +497,19 @@ class CompanionMessageOut(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ============================================================
+# FAMILY CHAT (Module 3, WebSockets)
+# ============================================================
+
+class ChatMessageOut(BaseModel):
+    id: uuid.UUID
+    patient_id: uuid.UUID
+    sender_id: uuid.UUID
+    sender_name: str
+    sender_role: str
+    content: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

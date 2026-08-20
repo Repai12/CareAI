@@ -120,18 +120,26 @@ def clear_login_attempts(key: str) -> None:
     _login_attempts.pop(key, None)
 
 
+def decode_access_token(token: str) -> str | None:
+    """Returns the user id from a valid access token, or None. Shared by
+    get_current_user (HTTP, via the Authorization header) and the chat
+    WebSocket endpoint (which can't set headers, so the token arrives as
+    a query param instead) - one JWT-decode implementation either way."""
+    try:
+        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
+        return payload.get("sub")
+    except JWTError:
+        return None
+
+
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    try:
-        payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
-        user_id = payload.get("sub")
-        if user_id is None:
-            raise credentials_exception
-    except JWTError:
+    user_id = decode_access_token(token)
+    if user_id is None:
         raise credentials_exception
 
     user = db.query(User).filter(User.id == user_id).first()
