@@ -184,12 +184,42 @@ entries that had zero code at all (mood tracking, AI prescription summarizer, AI
 Q&A, dual-persona AI companion, family chat over WebSockets) — see the scope note above item 14
 for how that gap was found. Every README-listed feature now has real, live-verified code.
 
+19. **Dead component cleanup** — deleted `MedicationForm/Table.tsx`, `AppointmentForm/Table.tsx`,
+    `VisitNoteForm.tsx`, `VisitHistory.tsx`, and their entire supporting island
+    (`services/api.ts`, `types/medication.ts`, `types/appointment.ts`, `types/visitNote.ts`) —
+    10 files total. Confirmed via grep first that nothing under `app/` (the actual routed pages)
+    imported any of them, directly or transitively; they were a fully self-contained, unreachable
+    leftover from before the team rebuilt these features on the real backend. Verified live after
+    deletion that Medications & Appointments and Visit Notes (the pages that share a name with the
+    dead components) still load correctly.
+
+20. **Persistent doctor-unverified badge + SOS safety hardening (README S13, corner cases)** —
+    the doctor-unverified disclosure (README S13's known gap: a license number is required at
+    signup but never checked against a real registry) was previously shown once, only on the
+    registration success screen. Added a reusable `DoctorUnverifiedBadge` and wired it in
+    everywhere a doctor's real account identity is shown to a patient/family viewer: the
+    Connections page's pending/active doctor entries, each visit note's doctor byline, and the
+    doctor's own dashboard header (a persistent self-reminder, not just a one-time notice).
+    Deliberately left off free-text `Appointment.doctor_name` (that's a typed string, not
+    necessarily a linked CareAI account, so the badge doesn't semantically apply there).
+
+    Separately, replaced the SOS button's native `confirm()` dialog with an on-page 3-second
+    countdown + Cancel button (same pattern real safety apps use — a brief, cancellable delay
+    catches an accidental tap without adding real friction to a genuine emergency). Added a
+    10-second rapid-repeat cooldown on the backend so an anxious user mashing the button doesn't
+    fire a fresh SMS batch and notification-feed entry every time; a repeat within the window
+    returns "already triggered Ns ago" instead. Live testing caught a real race condition in the
+    first cooldown implementation: two near-simultaneous requests (a double-click, or in this
+    case a stale-webpack-cache page crash that looped the request) could both read "no cooldown
+    yet" before either had written its claim, letting both through - fixed with a `threading.Lock`
+    that claims the cooldown slot *before* doing the actual SMS/notification work, not after, plus
+    a try/except that releases the claim if the work itself fails. Re-verified: two genuinely
+    spaced-apart triggers each created exactly one notification; a burst of requests within the
+    same countdown collapsed to exactly one.
+
 **Not yet done**: frontend route restructuring (`/patient/*`, `/family/*`, `/doctor/*` — the current
 shared-page-with-role-checks approach works correctly, this is organizational, not a functional
-gap), persistent doctor-unverified badge (currently only shown once at registration), SOS's
-3-second cancel window + rapid-repeat rate limiting, and cleanup of unused mismatched-style
-component files (`MedicationForm/Table`, `AppointmentForm/Table`, `VisitNoteForm/History`). Google
-Calendar OAuth is wired in but unverified beyond "doesn't crash the app" — nobody has real Google
+gap). Google Calendar OAuth is wired in but unverified beyond "doesn't crash the app" — nobody has real Google
 Cloud OAuth credentials to test the actual flow against. Family Chat's connection registry is
 in-memory/single-process by design (documented in `chat_manager.py`) — fine for this project's
 scale, would need a shared pub/sub layer if it ever ran behind multiple workers.

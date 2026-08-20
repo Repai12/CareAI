@@ -52,6 +52,7 @@ export interface SosResult {
   message: string;
   delivered_to: string[];
   failed_to: string[];
+  already_sent: boolean;
 }
 
 export function triggerSOS() {

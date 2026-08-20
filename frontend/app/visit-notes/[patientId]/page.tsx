@@ -13,6 +13,7 @@ import {
 } from "@/lib/api";
 import { getMyRole, getMyUserId } from "@/lib/apiClient";
 import PatientQaPanel from "@/components/PatientQaPanel";
+import DoctorUnverifiedBadge from "@/components/DoctorUnverifiedBadge";
 
 const EMPTY_NOTE: VisitNoteInput = { visit_date: "", notes: "", prescription: "" };
 
@@ -168,7 +169,9 @@ export default function VisitNotesPage() {
             <li key={note.id} className="bg-white border border-sageLight rounded-xl p-4">
               <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div>
-                  <p className="font-medium text-ink text-sm">{note.doctor_name}</p>
+                  <p className="font-medium text-ink text-sm">
+                    {note.doctor_name} <DoctorUnverifiedBadge />
+                  </p>
                   <p className="text-xs text-ink/40">{note.visit_date}</p>
                 </div>
                 {isOwnNote && editingId !== note.id && (

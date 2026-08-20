@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { DashboardResponse, WeeklyReportOut, getDashboard, getReportHistory, triggerSOS, getMyConnections } from "@/lib/api";
+import { DashboardResponse, WeeklyReportOut, getDashboard, getReportHistory, getMyConnections } from "@/lib/api";
+import SOSButton from "@/components/SOSButton";
 import VitalsCard from "@/components/VitalsCard";
 import MedicationsCard from "@/components/MedicationsCard";
 import AppointmentsCard from "@/components/AppointmentsCard";
@@ -12,6 +13,7 @@ import StatStrip from "@/components/StatStrip";
 import StatusBadge from "@/components/StatusBadge";
 import AISummaryPanel from "@/components/AISummaryPanel";
 import LogoutButton from "@/components/LogoutButton";
+import DoctorUnverifiedBadge from "@/components/DoctorUnverifiedBadge";
 
 function initials(name: string) {
   return name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
@@ -30,8 +32,6 @@ export default function DashboardPage() {
   const [reportHistory, setReportHistory] = useState<WeeklyReportOut[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
-  const [sosLoading, setSosLoading] = useState(false);
-  const [sosMessage, setSosMessage] = useState<string | null>(null);
   const [hasNoConnections, setHasNoConnections] = useState(false);
 
   useEffect(() => {
@@ -54,28 +54,6 @@ export default function DashboardPage() {
         .catch(() => {});
     }
   }, [patientId]);
-
-  async function handleSOS() {
-    if (!confirm("Are you sure you want to trigger an Emergency SOS Alert?")) return;
-    setSosLoading(true);
-    setSosMessage(null);
-    try {
-      const res = await triggerSOS();
-      if (res.failed_to.length > 0) {
-        setSosMessage(
-          `SOS sent. Delivered to ${res.delivered_to.length}, failed to reach ${res.failed_to.length} contact(s).`
-        );
-      } else if (res.delivered_to.length === 0) {
-        setSosMessage("SOS logged and family/doctor notified - no emergency contacts on file to text. Add one in Safety.");
-      } else {
-        setSosMessage(`SOS sent to all ${res.delivered_to.length} emergency contact(s).`);
-      }
-    } catch (e: any) {
-      setSosMessage(`SOS failed: ${e.message || "could not trigger alert"}`);
-    } finally {
-      setSosLoading(false);
-    }
-  }
 
   if (error) {
     return (
@@ -110,7 +88,9 @@ export default function DashboardPage() {
             {initials(data.patient.name)}
           </div>
           <div>
-            <p className="text-sm text-sage font-medium">CareAI · {roleLabel}</p>
+            <p className="text-sm text-sage font-medium">
+              CareAI · {roleLabel} {role === "doctor" && <DoctorUnverifiedBadge />}
+            </p>
             <h1 className="text-3xl font-display font-bold text-ink mt-0.5">{data.patient.name}</h1>
             <p className="text-ink/50 text-sm">{data.patient.email}</p>
           </div>
@@ -194,23 +174,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {sosMessage && (
-        <div className="mb-6 p-3 bg-alert/10 border border-alert/30 text-alert rounded-lg text-sm font-medium">
-          {sosMessage}
-        </div>
-      )}
-
-      {role === "patient" && (
-        <div className="mb-6">
-          <button
-            onClick={handleSOS}
-            disabled={sosLoading}
-            className="bg-alert text-white font-bold py-3 px-6 rounded-xl shadow-sm hover:opacity-90 disabled:opacity-50 transition"
-          >
-            {sosLoading ? "Sending..." : "🚨 Trigger Emergency SOS"}
-          </button>
-        </div>
-      )}
+      {role === "patient" && <SOSButton />}
 
       <StatStrip
         vitals={data.latest_vitals}

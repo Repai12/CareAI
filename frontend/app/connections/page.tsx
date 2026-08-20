@@ -12,6 +12,7 @@ import {
   type CareLink,
 } from "@/lib/api/me";
 import { getMyRole } from "@/lib/apiClient";
+import DoctorUnverifiedBadge from "@/components/DoctorUnverifiedBadge";
 
 const STATUS_STYLES: Record<string, string> = {
   pending: "border-gold bg-gold/10 text-gold",
@@ -131,6 +132,7 @@ export default function ConnectionsPage() {
                   <div>
                     <p className="font-medium text-ink text-sm">
                       {l.viewer_name} <span className="text-ink/50 font-normal">wants to connect as your {l.link_role}</span>
+                      {l.link_role === "doctor" && <> <DoctorUnverifiedBadge /></>}
                     </p>
                     <p className="text-xs text-ink/40 mt-1">Requested {new Date(l.created_at).toLocaleString()}</p>
                   </div>
@@ -168,6 +170,7 @@ export default function ConnectionsPage() {
                     <p className="font-medium text-ink text-sm">
                       {isPatient ? l.viewer_name : l.patient_name}
                       <span className="text-ink/50 font-normal"> · {l.link_role}</span>
+                      {isPatient && l.link_role === "doctor" && <> <DoctorUnverifiedBadge /></>}
                     </p>
                     <p className="text-xs text-ink/40 mt-1">
                       {l.permission_level === "view_and_manage" ? "Can view and manage" : "View only"}
