@@ -79,6 +79,10 @@ class ForgotPasswordRequest(BaseModel):
     email: EmailStr
 
 
+class ResendVerificationRequest(BaseModel):
+    email: EmailStr
+
+
 class ResetPasswordRequest(BaseModel):
     new_password: str
 
@@ -233,6 +237,46 @@ def verify_email(token: str, db: Session = Depends(get_db)):
     user.verification_token_expires_at = None
     db.commit()
     return {"message": "Email verified. You can now log in."}
+
+
+@router.post("/resend-verification")
+def resend_verification(payload: ResendVerificationRequest, db: Session = Depends(get_db)):
+    """
+    Closes a real dead end: the original verification email is
+    best-effort (_try_send_email swallows failures so registration
+    itself never blocks on an email outage), but that meant a genuinely
+    failed send left the user permanently stuck - can't log in
+    (unverified), can't re-register (email already taken), and there
+    was no way to trigger a second attempt. The expired-link error
+    message even already promised "or request a new one" - this is
+    that promise, finally implemented.
+
+    Same enumeration-safe generic response as forgot-password (README
+    S3.3's pattern) - never reveals whether the email is registered.
+    """
+    generic_response = {"message": "If that email is registered and not yet verified, a new link has been sent."}
+
+    user = db.query(User).filter(User.email == payload.email).first()
+    if not user or user.is_verified:
+        return generic_response
+
+    verification_token = generate_email_token()
+    user.verification_token = verification_token
+    user.verification_token_expires_at = datetime.utcnow() + timedelta(hours=VERIFICATION_TOKEN_TTL_HOURS)
+    db.commit()
+
+    verify_url = f"{settings.FRONTEND_URL}/verify-email/{verification_token}"
+    _try_send_email(
+        to_email=user.email,
+        subject="Verify your CareAI account",
+        html_content=(
+            f"<p>Hi {user.name},</p>"
+            f"<p>Confirm your email to activate your CareAI account:</p>"
+            f'<p><a href="{verify_url}">{verify_url}</a></p>'
+            f"<p>This link expires in {VERIFICATION_TOKEN_TTL_HOURS} hours.</p>"
+        ),
+    )
+    return generic_response
 
 
 @router.post("/login")
