@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { getVitalsHistory, getHealthReports, getSymptomLogs, getLatestDietPlan } from "@/lib/api/vitals";
+import { getMoodHistory } from "@/lib/api/mood";
 import HealthNav from "../_components/HealthNav";
-import { ClipboardIcon, DocumentSearchIcon, StethoscopeIcon, LeafIcon } from "../_components/icons";
+import { ClipboardIcon, DocumentSearchIcon, StethoscopeIcon, LeafIcon, SmileIcon } from "../_components/icons";
 
 function getMyRole(): string | null {
   if (typeof window === "undefined") return null;
@@ -27,6 +28,8 @@ export default function HealthOverviewPage() {
     lastUrgency: string | null;
     hasDietPlan: boolean;
     adherenceRate: number | null;
+    moodCount: number;
+    latestMood: string | null;
   } | null>(null);
 
   useEffect(() => {
@@ -38,8 +41,9 @@ export default function HealthOverviewPage() {
       getHealthReports(patientId),
       getSymptomLogs(patientId),
       getLatestDietPlan(patientId),
+      getMoodHistory(patientId),
     ])
-      .then(([vitals, reports, symptoms, diet]) => {
+      .then(([vitals, reports, symptoms, diet, moods]) => {
         setSummary({
           vitalsCount: vitals.length,
           latestVitals: vitals[0] ? `BP ${vitals[0].blood_pressure} · Sugar ${vitals[0].sugar_level}` : null,
@@ -48,6 +52,8 @@ export default function HealthOverviewPage() {
           lastUrgency: symptoms[0]?.urgency ?? null,
           hasDietPlan: !!diet.plan,
           adherenceRate: diet.adherence_rate,
+          moodCount: moods.length,
+          latestMood: moods[0]?.mood ?? null,
         });
         setLoaded(true);
       })
@@ -107,6 +113,16 @@ export default function HealthOverviewPage() {
       detail: summary.hasDietPlan
         ? `Plan active${summary.adherenceRate !== null ? ` · ${summary.adherenceRate}% adherence` : ""}`
         : "No diet plan yet",
+    },
+    {
+      href: `/health/${patientId}/mood`,
+      icon: SmileIcon,
+      accent: "text-gold bg-gold/15",
+      eyebrow: "Module 1 · Mood Tracking",
+      title: "Mood Tracking",
+      detail: summary.moodCount > 0
+        ? `${summary.moodCount} ${summary.moodCount === 1 ? "entry" : "entries"} logged · latest: ${summary.latestMood}`
+        : "No mood logged yet",
     },
   ];
 

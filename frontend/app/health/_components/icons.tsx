@@ -41,3 +41,13 @@ export function LeafIcon({ className = "w-5 h-5" }: { className?: string }) {
     </svg>
   );
 }
+
+export function SmileIcon({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+      <circle cx="12" cy="12" r="9" />
+      <path strokeLinecap="round" d="M8.5 10.5h.01M15.5 10.5h.01" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 14.5c1 1.2 2.4 1.8 4 1.8s3-.6 4-1.8" />
+    </svg>
+  );
+}
