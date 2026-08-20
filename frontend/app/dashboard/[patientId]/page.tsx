@@ -157,6 +157,12 @@ export default function DashboardPage() {
             </Link>
           )}
           <Link
+            href={`/chat/${patientId}`}
+            className="text-xs font-medium text-sage border border-sageLight rounded-full px-3 py-1.5 hover:bg-sageLight transition"
+          >
+            Family Chat
+          </Link>
+          <Link
             href={`/notifications/${patientId}`}
             className="text-xs font-medium text-sage border border-sageLight rounded-full px-3 py-1.5 hover:bg-sageLight transition"
           >

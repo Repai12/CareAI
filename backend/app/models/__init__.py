@@ -16,3 +16,4 @@ from app.models.notification import Notification
 from app.models.mood import MoodLog, MoodLevel
 from app.models.patient_qa import PatientQuestion
 from app.models.companion import CompanionMessage, CompanionPersona, CompanionRole
+from app.models.chat import ChatMessage

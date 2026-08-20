@@ -59,6 +59,30 @@ already be covered by `VisitNote.notes` - not a real gap.)
     optimistic bubble rolled back cleanly; switching from Companion to Coach correctly loaded a
     separate (empty) thread rather than the same one.
 
+18. **Family Chat over WebSockets** (Module 3, named explicitly in the Tech Stack table: "Real-time:
+    WebSockets (family/doctor chat)") - the last of the five missing README features. New
+    `ChatMessage` model/migration, `services/chat_manager.py` (a small in-memory per-patient
+    connection registry - deliberately not a Redis pub/sub layer, this is a single-process
+    dev/demo deployment, same scale assumption the rest of the project already makes), and
+    `routers/chat.py`: a REST history endpoint plus `WS /ws/chat/{patient_id}`. The browser
+    WebSocket API can't set an `Authorization` header, so the token travels as a query param and
+    is verified with a new `decode_access_token()` helper factored out of `auth.py`'s existing
+    `get_current_user` (one JWT-decode implementation either way). Access is patient-self or any
+    actively-linked family/doctor, same bar as the dashboard. Frontend: `/chat/[patientId]` with a
+    connection-status indicator, optimistic local send, and a one-shot reconnect-with-token-
+    refresh on unexpected close (distinguishing a real access denial, code 4403, from "just
+    reconnect"). Verified live with two real concurrent browser sessions (patient + linked family,
+    two separate logins, not just two tabs sharing one) - a message sent from either side appeared
+    in the other instantly with no page reload. That same two-tab test caught a real bug first:
+    every message was rendering twice. Root cause was React Strict Mode's dev-only double-invoke
+    of the connect effect racing ahead of the async history fetch - both invocations ended up
+    opening their own live socket before either could be cancelled, so every broadcast arrived
+    twice. Fixed by tracking a `cancelled` flag through the async chain and having `openSocket()`
+    close any existing connection before opening a new one; re-tested and confirmed single
+    delivery both directions. Deliberately not writing a `Notification` row per message (the
+    whole point of the socket is realtime delivery; a notification-per-message would be noisy
+    self-spam) - a documented scope line, not a missed corner case.
+
 
 Fixed and verified live (real DB + real browser sessions), on branch `fix/stabilize-and-polish`:
 
@@ -155,13 +179,20 @@ description of what happened. Staging file-by-file (no wildcards) going forward 
     across the landing page, a form page, a fully-loaded dashboard, and a page with no prior
     background styling — card/text legibility holds up in every case.
 
+**Update (2026-08-20, later same day):** items 14-18 above closed the five README Features-table
+entries that had zero code at all (mood tracking, AI prescription summarizer, AI patient history
+Q&A, dual-persona AI companion, family chat over WebSockets) — see the scope note above item 14
+for how that gap was found. Every README-listed feature now has real, live-verified code.
+
 **Not yet done**: frontend route restructuring (`/patient/*`, `/family/*`, `/doctor/*` — the current
 shared-page-with-role-checks approach works correctly, this is organizational, not a functional
 gap), persistent doctor-unverified badge (currently only shown once at registration), SOS's
 3-second cancel window + rapid-repeat rate limiting, and cleanup of unused mismatched-style
 component files (`MedicationForm/Table`, `AppointmentForm/Table`, `VisitNoteForm/History`). Google
 Calendar OAuth is wired in but unverified beyond "doesn't crash the app" — nobody has real Google
-Cloud OAuth credentials to test the actual flow against.
+Cloud OAuth credentials to test the actual flow against. Family Chat's connection registry is
+in-memory/single-process by design (documented in `chat_manager.py`) — fine for this project's
+scale, would need a shared pub/sub layer if it ever ran behind multiple workers.
 
 ---
 
