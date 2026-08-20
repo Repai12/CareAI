@@ -229,6 +229,29 @@ for how that gap was found. Every README-listed feature now has real, live-verif
     (Family Chat already had one, 2000 chars) - added matching caps (2000 and 1000 chars) on both
     backend and frontend `maxLength` for consistency and to bound AI cost/abuse.
 
+22. **Two more Module 3 gaps found on a second README cross-check** — re-reading the Features
+    table line-by-line (not just section-by-section) turned up two more items that were
+    incomplete or missing entirely, beyond the five built earlier today: "AI weekly health
+    summaries" and "automated daily digest".
+    - The existing Weekly Report was never actually AI-generated despite the name - it only ever
+      built a raw HTML table dump. Added `summarize_weekly_report()` to `groq_health_service.py`
+      (grounded in the week's real vitals/mood data, same graceful-None-on-no-key pattern as
+      every other AI feature here) and wired it into `report_service.py` - the email now opens
+      with a short AI narrative above the tables when Groq is available, and degrades to
+      tables-only otherwise. Verified via direct call: report generation and the `EmailLog` audit
+      trail both worked correctly with the narrative section cleanly absent (no key configured).
+    - "Automated daily digest" didn't exist at all - no job, no notification category, nothing.
+      Added `services/daily_digest_service.py`, a new `DIGEST` notification category, and a daily
+      8 PM scheduler job (before the 9 PM missed-check-in job). Posts one Notification Center
+      entry per patient summarizing the day (mood, latest vitals, active medication count,
+      check-in status) - deliberately an in-app notification, not a second daily email on top of
+      the weekly one, and deliberately skipped entirely for a patient with zero activity that day
+      rather than posting a content-free "nothing happened" every single day. Added the missing
+      "Daily Digest" filter tab to the Notification Center frontend. Verified live both ways: ran
+      with no activity logged (correctly skipped, zero notifications), then logged a mood entry
+      and re-ran (correctly created one notification with the right content, visible under both
+      "All" and the new "Daily Digest" filter).
+
 **Not yet done**: frontend route restructuring (`/patient/*`, `/family/*`, `/doctor/*` — the current
 shared-page-with-role-checks approach works correctly, this is organizational, not a functional
 gap). Google Calendar OAuth is wired in but unverified beyond "doesn't crash the app" — nobody has real Google

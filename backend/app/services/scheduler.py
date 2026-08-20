@@ -2,11 +2,13 @@
 services/scheduler.py
 ------------------------
 OWNED BY MEMBER 4 (Repai). Runs the weekly report automatically every
-Sunday, for every patient. Also registers Member 3's daily missed-
-check-in job (README S8.6) - it lives in routers/safety_checkin.py since
-that's where the rest of that feature's logic is, but every scheduled
-job in the app is registered from this one file so there's a single
-place to see everything that runs on a timer.
+Sunday, for every patient, plus the automated daily digest (README
+Features table, Module 3) at 8 PM daily. Also registers Member 3's
+daily missed-check-in job (README S8.6) - it lives in
+routers/safety_checkin.py since that's where the rest of that feature's
+logic is, but every scheduled job in the app is registered from this
+one file so there's a single place to see everything that runs on a
+timer.
 
 NOTE ON ARCHITECTURE: the original spec called for Celery + Redis for
 background jobs. This uses APScheduler instead - a lighter-weight
@@ -24,6 +26,7 @@ from apscheduler.triggers.cron import CronTrigger
 from app.database import SessionLocal
 from app.models.user import User, UserRole
 from app.services.report_service import generate_weekly_report
+from app.services.daily_digest_service import run_daily_digest
 from app.routers.safety_checkin import check_missed_checkins
 
 scheduler = BackgroundScheduler()
@@ -52,6 +55,16 @@ def run_missed_checkin_job():
         db.close()
 
 
+def run_daily_digest_job():
+    db = SessionLocal()
+    try:
+        run_daily_digest(db)
+    except Exception as e:
+        print(f"[scheduler] Daily digest job failed: {e}")
+    finally:
+        db.close()
+
+
 def start_scheduler():
     scheduler.add_job(
         run_weekly_reports_for_all_patients,
@@ -65,6 +78,14 @@ def start_scheduler():
         # (S10) - late enough that a patient has had all day to check in.
         CronTrigger(hour=21, minute=0),
         id="missed_checkin_job",
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        run_daily_digest_job,
+        # 8 PM - before the missed-checkin job, after most of a day's
+        # activity has already happened.
+        CronTrigger(hour=20, minute=0),
+        id="daily_digest_job",
         replace_existing=True,
     )
     scheduler.start()

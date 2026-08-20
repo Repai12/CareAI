@@ -10,6 +10,7 @@ const CATEGORIES = [
   { value: "MEDICATION", label: "Medication" },
   { value: "APPOINTMENT", label: "Appointments" },
   { value: "SAFETY", label: "Safety" },
+  { value: "DIGEST", label: "Daily Digest" },
 ];
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -17,6 +18,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   MEDICATION: "border-sage bg-sageLight",
   APPOINTMENT: "border-gold bg-gold/10",
   SAFETY: "border-steel bg-steel/5",
+  DIGEST: "border-sage/50 bg-sageLight/50",
 };
 
 export default function NotificationsPage() {
