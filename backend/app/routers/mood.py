@@ -19,7 +19,7 @@ from app.database import get_db
 from app.auth import get_current_user
 from app.models.user import User, UserRole, CareLink, CareLinkStatus
 from app.models.mood import MoodLog, MoodLevel
-from app.schemas import MoodLogCreate, MoodLogOut
+from app.schemas import MoodLogCreate, MoodLogOut, MoodLogUpdate
 
 router = APIRouter(prefix="/mood", tags=["mood"])
 
@@ -83,3 +83,47 @@ def get_mood_history(
         .limit(min(limit, 100))
         .all()
     )
+
+
+@router.put("/{patient_id}/{mood_id}", response_model=MoodLogOut)
+def update_mood(
+    patient_id: uuid.UUID,
+    mood_id: uuid.UUID,
+    payload: MoodLogUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    entry = db.query(MoodLog).filter(MoodLog.id == mood_id, MoodLog.patient_id == patient_id).first()
+    if not entry:
+        raise HTTPException(404, "Mood entry not found")
+    if entry.patient_id != current_user.id:
+        raise HTTPException(403, "You can only edit your own mood entries")
+
+    if payload.mood is not None:
+        if payload.mood not in VALID_MOODS:
+            raise HTTPException(422, f"mood must be one of {sorted(VALID_MOODS)}")
+        entry.mood = payload.mood
+    if payload.note is not None:
+        entry.note = payload.note.strip() or None
+
+    db.commit()
+    db.refresh(entry)
+    return entry
+
+
+@router.delete("/{patient_id}/{mood_id}")
+def delete_mood(
+    patient_id: uuid.UUID,
+    mood_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    entry = db.query(MoodLog).filter(MoodLog.id == mood_id, MoodLog.patient_id == patient_id).first()
+    if not entry:
+        raise HTTPException(404, "Mood entry not found")
+    if entry.patient_id != current_user.id:
+        raise HTTPException(403, "You can only delete your own mood entries")
+
+    db.delete(entry)
+    db.commit()
+    return {"status": "deleted"}

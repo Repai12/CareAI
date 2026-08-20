@@ -217,6 +217,18 @@ for how that gap was found. Every README-listed feature now has real, live-verif
     spaced-apart triggers each created exactly one notification; a burst of requests within the
     same countdown collapsed to exactly one.
 
+21. **Corner-case sweep across the 5 new features** — found and fixed four real gaps that a
+    mechanical feature-by-feature build missed: (1) editing a visit note's `notes`/`prescription`
+    didn't invalidate its cached `ai_summary`, so a doctor's edit could leave a stale AI
+    explanation describing the old, now-wrong text — now cleared on any edit, regenerated on next
+    request. (2) Mood tracking had no edit/delete, unlike the established Vitals pattern (a
+    patient can already fix/remove a vitals entry) — added matching `PUT`/`DELETE
+    /mood/{patient_id}/{mood_id}`, own-entry-only, plus a Delete button in the UI; verified live
+    (logged an entry, deleted it, confirmed both the real `DELETE` network call and the empty
+    state). (3)/(4) AI Companion messages and AI Patient History Q&A questions had no length cap
+    (Family Chat already had one, 2000 chars) - added matching caps (2000 and 1000 chars) on both
+    backend and frontend `maxLength` for consistency and to bound AI cost/abuse.
+
 **Not yet done**: frontend route restructuring (`/patient/*`, `/family/*`, `/doctor/*` — the current
 shared-page-with-role-checks approach works correctly, this is organizational, not a functional
 gap). Google Calendar OAuth is wired in but unverified beyond "doesn't crash the app" — nobody has real Google

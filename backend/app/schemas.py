@@ -452,6 +452,11 @@ class MoodLogCreate(BaseModel):
     note: Optional[str] = None
 
 
+class MoodLogUpdate(BaseModel):
+    mood: Optional[str] = None
+    note: Optional[str] = None
+
+
 class MoodLogOut(BaseModel):
     id: uuid.UUID
     mood: str

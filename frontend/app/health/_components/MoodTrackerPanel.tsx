@@ -3,7 +3,7 @@
 import { useState } from "react";
 import SectionCard from "@/components/SectionCard";
 import { SmileIcon } from "./icons";
-import { MoodLogOut, MoodLevel, logMood } from "@/lib/api/mood";
+import { MoodLogOut, MoodLevel, logMood, deleteMood } from "@/lib/api/mood";
 
 const MOODS: { value: MoodLevel; emoji: string; label: string }[] = [
   { value: "great", emoji: "😄", label: "Great" },
@@ -35,6 +35,16 @@ export default function MoodTrackerPanel({
   const [selected, setSelected] = useState<MoodLevel | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  async function handleDelete(moodId: string) {
+    if (!confirm("Delete this mood entry?")) return;
+    try {
+      await deleteMood(patientId, moodId);
+      setLogs((prev) => prev.filter((l) => l.id !== moodId));
+    } catch (e: any) {
+      setError(e.message || "Failed to delete mood entry");
+    }
+  }
 
   async function handleLog(mood: MoodLevel) {
     setSelected(mood);
@@ -107,7 +117,18 @@ export default function MoodTrackerPanel({
                   </span>
                   {l.note && <p className="text-xs text-ink/60 mt-0.5">{l.note}</p>}
                 </div>
-                <span className="text-xs text-ink/40 shrink-0 ml-2">{new Date(l.logged_at).toLocaleString()}</span>
+                <div className="flex items-center gap-2 shrink-0 ml-2">
+                  <span className="text-xs text-ink/40">{new Date(l.logged_at).toLocaleString()}</span>
+                  {isOwner && (
+                    <button
+                      onClick={() => handleDelete(l.id)}
+                      className="text-xs text-alert/70 hover:text-alert hover:underline"
+                      title="Delete this entry"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
               </li>
             ))}
           </ul>

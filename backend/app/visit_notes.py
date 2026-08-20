@@ -191,8 +191,10 @@ def update_visit_note(
         if not payload.notes.strip():
             raise HTTPException(400, "Visit notes cannot be empty.")
         note.notes = payload.notes
+        note.ai_summary = None  # stale now - regenerate on next request
     if payload.prescription is not None:
         note.prescription = payload.prescription
+        note.ai_summary = None
 
     note.updated_at = datetime.utcnow()
     db.commit()

@@ -29,6 +29,8 @@ from app.services.groq_health_service import answer_patient_question
 
 router = APIRouter(prefix="/patient-qa", tags=["patient qa"])
 
+MAX_QUESTION_LENGTH = 1000
+
 
 def _assert_treating_doctor(patient_id: UUID, current_user: User, db: Session):
     if current_user.role != UserRole.doctor.value:
@@ -115,6 +117,8 @@ def ask_patient_question(
 
     if not payload.question.strip():
         raise HTTPException(422, "Question cannot be empty.")
+    if len(payload.question) > MAX_QUESTION_LENGTH:
+        raise HTTPException(422, f"Question must be {MAX_QUESTION_LENGTH} characters or fewer.")
 
     patient = db.query(User).filter(User.id == patient_id, User.role == UserRole.patient.value).first()
     if not patient:
