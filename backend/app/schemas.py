@@ -440,3 +440,21 @@ class SafetyCheckinOut(BaseModel):
     is_checked_in: bool
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ============================================================
+# MOOD TRACKING (Module 1)
+# ============================================================
+
+class MoodLogCreate(BaseModel):
+    mood: str  # MoodLevel value: great/good/okay/low/bad
+    note: Optional[str] = None
+
+
+class MoodLogOut(BaseModel):
+    id: uuid.UUID
+    mood: str
+    note: Optional[str] = None
+    logged_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

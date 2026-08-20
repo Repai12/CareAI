@@ -2,6 +2,23 @@
 
 ## Progress log (2026-08-20)
 
+**Scope note (2026-08-20, later same day):** everything above this line audited the codebase
+against README's numbered spec sections, but never checked the top-level **Features** table
+itself feature-by-feature. Doing that turned up five README-listed features with **zero code,
+backend or frontend** - not broken, never started: mood tracking, AI prescription summarizer, AI
+patient history Q&A, dual-persona AI companion, and family chat over WebSockets. Building all
+five now, each its own entry below. ("Doctor diagnosis entries", also listed, turns out to
+already be covered by `VisitNote.notes` - not a real gap.)
+
+14. **Mood tracking** (Module 1) - built from scratch: `MoodLog` model/migration, `routers/mood.py`
+    (`POST`/`GET /mood/{patient_id}`, patient logs, patient+active-linked family/doctor view),
+    and a new Mood tab in the Health module (emoji picker + note + 14-day trend dots + history).
+    Verified live: patient logs a mood with a note, entry appears immediately with the correct
+    trend dot and timestamp; logging back in as the linked family account on the same URL shows
+    the same history read-only with the picker correctly hidden (`isOwner` gate). Multiple
+    entries/day allowed on purpose - a real user checks in more than once.
+
+
 Fixed and verified live (real DB + real browser sessions), on branch `fix/stabilize-and-polish`:
 
 1. **Environment & boot** (`849e3aa`) — added `.env.example` for both apps, fixed `requirements.txt`

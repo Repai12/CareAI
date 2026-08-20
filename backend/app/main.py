@@ -27,6 +27,7 @@ from app.routers import (
     reports,
     ai_summary,
     notifications,
+    mood,
 )
 from app.routers import vitals as vitals_router
 from app.routers import emergency as emergency_router
@@ -79,6 +80,7 @@ app.include_router(dashboard.router)
 app.include_router(notifications.router)
 app.include_router(reports.router)
 app.include_router(ai_summary.router)
+app.include_router(mood.router)
 
 
 @app.on_event("startup")
