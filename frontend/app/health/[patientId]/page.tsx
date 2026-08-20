@@ -6,8 +6,9 @@ import Link from "next/link";
 import { getVitalsHistory, getHealthReports, getSymptomLogs, getLatestDietPlan } from "@/lib/api/vitals";
 import { getMoodHistory } from "@/lib/api/mood";
 import { getActivityHistory } from "@/lib/api/activity";
+import { getLatestWellness } from "@/lib/api/wellness";
 import HealthNav from "../_components/HealthNav";
-import { ClipboardIcon, DocumentSearchIcon, StethoscopeIcon, LeafIcon, SmileIcon, ActivityIcon } from "../_components/icons";
+import { ClipboardIcon, DocumentSearchIcon, StethoscopeIcon, LeafIcon, SmileIcon, ActivityIcon, SparkleIcon } from "../_components/icons";
 
 function getMyRole(): string | null {
   if (typeof window === "undefined") return null;
@@ -33,6 +34,7 @@ export default function HealthOverviewPage() {
     latestMood: string | null;
     activityCount: number;
     activityMinutesThisWeek: number;
+    hasWellnessTips: boolean;
   } | null>(null);
 
   useEffect(() => {
@@ -46,8 +48,9 @@ export default function HealthOverviewPage() {
       getLatestDietPlan(patientId),
       getMoodHistory(patientId),
       getActivityHistory(patientId),
+      getLatestWellness(patientId),
     ])
-      .then(([vitals, reports, symptoms, diet, moods, activity]) => {
+      .then(([vitals, reports, symptoms, diet, moods, activity, wellness]) => {
         const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
         setSummary({
           vitalsCount: vitals.length,
@@ -63,6 +66,7 @@ export default function HealthOverviewPage() {
           activityMinutesThisWeek: activity
             .filter((a) => new Date(a.logged_at).getTime() >= weekAgo)
             .reduce((sum, a) => sum + a.duration_minutes, 0),
+          hasWellnessTips: !!wellness,
         });
         setLoaded(true);
       })
@@ -142,6 +146,14 @@ export default function HealthOverviewPage() {
       detail: summary.activityCount > 0
         ? `${summary.activityMinutesThisWeek} min this week · ${summary.activityCount} total entries`
         : "No activity logged yet",
+    },
+    {
+      href: `/health/${patientId}/wellness`,
+      icon: SparkleIcon,
+      accent: "text-gold bg-gold/15",
+      eyebrow: "Module 2 · Wellness Recommendation Engine",
+      title: "Wellness Tips",
+      detail: summary.hasWellnessTips ? "Recommendations available" : "No wellness tips generated yet",
     },
   ];
 

@@ -493,6 +493,19 @@ class ActivityLogOut(BaseModel):
 
 
 # ============================================================
+# WELLNESS RECOMMENDATION ENGINE (Module 2)
+# ============================================================
+
+class WellnessRecommendationOut(BaseModel):
+    id: uuid.UUID
+    based_on_summary: str
+    recommendations: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ============================================================
 # AI PATIENT HISTORY Q&A (Module 3, doctor-only)
 # ============================================================
 
