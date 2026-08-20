@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center gap-4 bg-paper">
+    <main className="min-h-screen flex flex-col items-center justify-center gap-4">
       <h1 className="text-3xl font-display font-bold text-ink">CareAI</h1>
       <p className="text-ink/50">AI-Powered Elderly Health Monitoring Platform</p>
       <Link

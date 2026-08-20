@@ -59,7 +59,7 @@ export default function HealthOverviewPage() {
 
   if (error) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-paper">
+      <main className="min-h-screen flex items-center justify-center">
         <p className="text-alert">{error}</p>
       </main>
     );
@@ -67,7 +67,7 @@ export default function HealthOverviewPage() {
 
   if (!loaded || !summary) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-paper">
+      <main className="min-h-screen flex items-center justify-center">
         <p className="text-ink/50">Loading health module...</p>
       </main>
     );
@@ -111,7 +111,7 @@ export default function HealthOverviewPage() {
   ];
 
   return (
-    <main className="min-h-screen px-6 py-10 max-w-5xl mx-auto bg-paper">
+    <main className="min-h-screen px-6 py-10 max-w-5xl mx-auto">
       <header className="mb-2">
         <p className="text-sm text-sage font-medium">CareAI · Health Module (Member 1)</p>
         <h1 className="text-3xl font-display font-bold text-ink mt-0.5">Vitals, AI Reports, Symptoms &amp; Diet</h1>

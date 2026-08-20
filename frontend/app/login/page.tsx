@@ -55,7 +55,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-paper">
+    <main className="min-h-screen flex items-center justify-center">
       <form onSubmit={handleSubmit} className="bg-white border border-sageLight rounded-xl shadow-sm p-8 w-full max-w-sm">
         <h1 className="text-2xl font-display font-semibold text-ink mb-1">CareAI</h1>
         <p className="text-ink/50 text-sm mb-6">Sign in to your health dashboard</p>

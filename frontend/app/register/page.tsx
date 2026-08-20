@@ -42,7 +42,7 @@ export default function RegisterPage() {
 
   if (result) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-paper">
+      <main className="min-h-screen flex items-center justify-center">
         <div className="bg-white border border-sageLight rounded-xl shadow-sm p-8 w-full max-w-sm text-center">
           <h1 className="text-2xl font-display font-semibold text-ink mb-2">Check your email</h1>
           <p className="text-ink/60 text-sm mb-4">
@@ -71,7 +71,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-paper py-10">
+    <main className="min-h-screen flex items-center justify-center py-10">
       <form
         onSubmit={handleSubmit}
         className="bg-white border border-sageLight rounded-xl shadow-sm p-8 w-full max-w-sm"

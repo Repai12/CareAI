@@ -83,7 +83,7 @@ export default function PatientsListPage() {
 
   if (error) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-paper">
+      <main className="min-h-screen flex items-center justify-center">
         <p className="text-alert">{error}</p>
       </main>
     );
