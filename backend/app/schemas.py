@@ -427,6 +427,7 @@ class VisitNoteResponse(BaseModel):
     notes: str
     prescription: Optional[str] = None
     status: str
+    ai_summary: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

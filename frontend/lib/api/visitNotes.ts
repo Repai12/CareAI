@@ -20,6 +20,7 @@ export interface VisitNoteOut {
   notes: string;
   prescription: string | null;
   status: string;
+  ai_summary: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -51,4 +52,8 @@ export function updateVisitNote(patientId: string, noteId: string, payload: { no
 
 export function archiveVisitNote(patientId: string, noteId: string) {
   return apiFetch(`/visit-notes/${patientId}/${noteId}`, { method: "DELETE" });
+}
+
+export function summarizeVisitNote(patientId: string, noteId: string) {
+  return apiFetch(`/visit-notes/${patientId}/${noteId}/summarize`, { method: "POST" }) as Promise<VisitNoteOut>;
 }

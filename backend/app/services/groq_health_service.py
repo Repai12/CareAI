@@ -361,3 +361,35 @@ Vitals trend:
         "restored for a plan tailored to your recent vitals."
     )
     return {"based_on_summary": trend_summary, "plan": plan_text, "grocery_list": []}
+
+
+# ---------------------------------------------------------------------------
+# AI Prescription Summarizer (README Features table, Module 3) - reuses this
+# file's Groq client rather than standing up a second one, same
+# defensive "never crash on a missing key/timeout" pattern as every
+# function above.
+# ---------------------------------------------------------------------------
+
+def summarize_prescription(notes: str, prescription: str | None) -> str | None:
+    """Plain-English explanation of a doctor's visit notes/prescription for
+    the patient/family audience. Returns None (never raises) if Groq is
+    unavailable - callers show a fallback message instead of a cached
+    empty string, so a later retry can still succeed."""
+
+    combined = (notes or "").strip()
+    if prescription and prescription.strip():
+        combined += f"\n\nPrescription: {prescription.strip()}"
+    if not combined:
+        return None
+
+    prompt = f"""
+You are explaining a doctor's visit note to an elderly patient's family in
+plain, reassuring English. In 3-5 short sentences, explain what the visit
+was about, what was found or decided, and what the prescription (if any) is
+for and how to take it. Do not invent anything not present below. Do not
+give new medical advice - only explain what's already written.
+
+Doctor's note and prescription:
+{combined[:4000]}
+"""
+    return _call_groq(prompt)
