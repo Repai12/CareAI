@@ -87,14 +87,23 @@ description of what happened. Staging file-by-file (no wildcards) going forward 
     the way: `lib/api/notifications.ts` was never in the `lib/api.ts` barrel export, and
     `getMyPatients()`'s frontend type was missing `patient_code` despite the backend returning it.
 
+13. **Site-wide background treatment** (`95d9e68`) — final polish pass. Every page used a flat
+    `#F4F7F6` off-white with zero depth. Replaced with a layered gradient + three large, heavily
+    blurred, low-opacity color shapes (sage/gold/steel, the existing palette — no new colors)
+    defined once in `app/layout.tsx` so it's automatically consistent on every route, including
+    pages that never had their own background styling. Removed the flat `bg-paper` override from
+    15 individual pages so the new layout-level background actually shows through. No component
+    logic touched — purely `globals.css` + `layout.tsx` + className cleanup. Verified visually
+    across the landing page, a form page, a fully-loaded dashboard, and a page with no prior
+    background styling — card/text legibility holds up in every case.
+
 **Not yet done**: frontend route restructuring (`/patient/*`, `/family/*`, `/doctor/*` — the current
-shared-page-with-role-checks approach works correctly, this is organizational/cosmetic, not a
-functional gap), visual/interaction polish pass, persistent doctor-unverified badge (currently only
-shown once at registration), SOS's 3-second cancel window + rapid-repeat rate limiting, and cleanup
-of unused mismatched-style component files (`MedicationForm/Table`, `AppointmentForm/Table`,
-`VisitNoteForm/History`). Google Calendar OAuth is
-wired in but unverified beyond "doesn't crash the app" — nobody has real Google Cloud OAuth
-credentials to test the actual flow against.
+shared-page-with-role-checks approach works correctly, this is organizational, not a functional
+gap), persistent doctor-unverified badge (currently only shown once at registration), SOS's
+3-second cancel window + rapid-repeat rate limiting, and cleanup of unused mismatched-style
+component files (`MedicationForm/Table`, `AppointmentForm/Table`, `VisitNoteForm/History`). Google
+Calendar OAuth is wired in but unverified beyond "doesn't crash the app" — nobody has real Google
+Cloud OAuth credentials to test the actual flow against.
 
 ---
 
