@@ -446,7 +446,9 @@ _COMPANION_SYSTEM_PROMPTS = {
 }
 
 
-def summarize_weekly_report(patient_name: str, vitals_summary: str, mood_summary: str, appt_count: int) -> str | None:
+def summarize_weekly_report(
+    patient_name: str, vitals_summary: str, mood_summary: str, appt_count: int, active_med_count: int
+) -> str | None:
     """AI Weekly Health Summary (README Features table, Module 3) - the
     weekly report previously only ever sent a raw HTML table dump, never
     an actual AI-written narrative despite README's naming. Returns None
@@ -463,6 +465,7 @@ and one encouraging note. Do not invent anything not present below.
 Patient: {patient_name}
 Vitals this week: {vitals_summary}
 Mood this week: {mood_summary}
+Active medications: {active_med_count}
 Upcoming appointments: {appt_count}
 """
     return _call_groq(prompt)

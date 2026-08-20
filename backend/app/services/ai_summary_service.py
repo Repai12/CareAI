@@ -20,7 +20,7 @@ Corner cases handled (per spec):
 """
 
 import time
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 import google.generativeai as genai
 from sqlalchemy.orm import Session
@@ -64,11 +64,20 @@ def _gather_recent_logs(db: Session, patient: User) -> dict:
         .order_by(VitalsLog.logged_at)
         .all()
     )
-    # Medications no longer have a patient linkage in the DB (Afifa's
-    # migration 5c905c544fa2 dropped patient_id/active) - can't scope this
-    # per-patient right now, so omit rather than leak other patients' meds
-    # into a doctor's summary email.
-    meds = []
+    # Medication.patient_id was re-added in migration 56b76de96e84 (this
+    # comment used to say it was permanently gone - stale, found live: the
+    # AI summary was confidently telling doctors "no active medications"
+    # for patients who plainly have some, since this always returned []).
+    today = date.today()
+    meds = (
+        db.query(Medication)
+        .filter(
+            Medication.patient_id == patient.id,
+            (Medication.start_date.is_(None)) | (Medication.start_date <= today),
+            (Medication.end_date.is_(None)) | (Medication.end_date >= today),
+        )
+        .all()
+    )
     appts = (
         db.query(Appointment)
         .filter(Appointment.patient_email == patient.email, Appointment.appointment_date >= thirty_days_ago.date())
@@ -126,7 +135,7 @@ def generate_doctor_ai_summary(db: Session, patient_id, requesting_doctor: User)
 
     summary_html: str
     try:
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-flash-latest")
         prompt = _build_gemini_prompt(patient, logs)
         response = model.generate_content(
             prompt,

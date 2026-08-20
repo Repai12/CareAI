@@ -5,7 +5,7 @@ OWNED BY MEMBER 4 (Repai) - Module 2, Feature 4 core logic. Pulls 7 days
 of real data, builds the HTML email, sends via Resend, logs every attempt.
 """
 
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
@@ -98,10 +98,20 @@ def generate_weekly_report(db: Session, patient_id) -> list[EmailLog]:
         .order_by(VitalsLog.logged_at)
         .all()
     )
-    # Medications have no patient linkage in the current schema (Afifa's
-    # migration dropped patient_id/active) - omit rather than send another
-    # patient's medications in this patient's weekly report.
-    meds = []
+    # Medication.patient_id was re-added in migration 56b76de96e84 - this
+    # comment used to say it was permanently gone (stale; found live via
+    # the same bug in ai_summary_service.py: the report always claimed
+    # "no active medications" regardless of reality).
+    today = date.today()
+    meds = (
+        db.query(Medication)
+        .filter(
+            Medication.patient_id == patient_id,
+            (Medication.start_date.is_(None)) | (Medication.start_date <= today),
+            (Medication.end_date.is_(None)) | (Medication.end_date >= today),
+        )
+        .all()
+    )
     appts = (
         db.query(Appointment)
         .filter(Appointment.patient_email == patient.email, Appointment.appointment_date >= datetime.utcnow().date())
@@ -120,7 +130,7 @@ def generate_weekly_report(db: Session, patient_id) -> list[EmailLog]:
     # degrades gracefully to just the tables, same as every other AI
     # feature in this app.
     ai_narrative = summarize_weekly_report(
-        patient.name, _vitals_summary_text(vitals), _mood_summary_text(moods), len(appts)
+        patient.name, _vitals_summary_text(vitals), _mood_summary_text(moods), len(appts), len(meds)
     )
 
     html = _build_summary_html(patient, vitals, meds, appts, ai_narrative)
