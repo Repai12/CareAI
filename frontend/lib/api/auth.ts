@@ -49,6 +49,13 @@ export function verifyEmail(token: string) {
   return apiFetch(`/auth/verify-email/${token}`) as Promise<{ message: string }>;
 }
 
+export function resendVerification(email: string) {
+  return apiFetch(`/auth/resend-verification`, {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  }) as Promise<{ message: string }>;
+}
+
 export function forgotPassword(email: string) {
   return apiFetch(`/auth/forgot-password`, {
     method: "POST",
