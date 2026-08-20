@@ -27,6 +27,7 @@ router = APIRouter(prefix="/companion", tags=["companion"])
 
 VALID_PERSONAS = {p.value for p in CompanionPersona}
 HISTORY_TURNS = 10
+MAX_MESSAGE_LENGTH = 2000
 
 
 def _assert_self(patient_id: UUID, current_user: User):
@@ -65,6 +66,8 @@ def send_companion_message(
         raise HTTPException(422, f"persona must be one of {sorted(VALID_PERSONAS)}")
     if not payload.message.strip():
         raise HTTPException(422, "Message cannot be empty.")
+    if len(payload.message) > MAX_MESSAGE_LENGTH:
+        raise HTTPException(422, f"Message must be {MAX_MESSAGE_LENGTH} characters or fewer.")
 
     prior = (
         db.query(CompanionMessage)

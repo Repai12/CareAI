@@ -137,6 +137,7 @@ export default function CompanionPage() {
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder={`Message your ${active.label.toLowerCase()}...`}
+          maxLength={2000}
           disabled={loading}
           className="flex-1 border border-sageLight rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sage disabled:opacity-50"
         />

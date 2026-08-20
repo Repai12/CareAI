@@ -53,6 +53,7 @@ export default function PatientQaPanel({ patientId }: { patientId: string }) {
           onChange={(e) => setQuestion(e.target.value)}
           placeholder="e.g. 'Has their blood pressure trended up recently?' or 'What was discussed at the last visit?'"
           rows={2}
+          maxLength={1000}
           className="w-full border border-sageLight rounded-lg px-3 py-2 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-sage"
         />
         <button

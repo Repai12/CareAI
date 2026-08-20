@@ -25,3 +25,7 @@ export function logMood(patientId: string, mood: MoodLevel, note?: string) {
 export function getMoodHistory(patientId: string, limit = 14) {
   return apiFetch(`/mood/${patientId}?limit=${limit}`) as Promise<MoodLogOut[]>;
 }
+
+export function deleteMood(patientId: string, moodId: string) {
+  return apiFetch(`/mood/${patientId}/${moodId}`, { method: "DELETE" });
+}

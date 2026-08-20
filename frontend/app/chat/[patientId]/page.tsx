@@ -165,6 +165,7 @@ export default function ChatPage() {
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Type a message..."
+          maxLength={2000}
           disabled={status !== "open"}
           className="flex-1 border border-sageLight rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sage disabled:opacity-50"
         />
