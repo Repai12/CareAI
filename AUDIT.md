@@ -45,6 +45,20 @@ already be covered by `VisitNote.notes` - not a real gap.)
     back. Fixed both, then verified the graceful-failure path end-to-end (keyless dev environment
     correctly returns "AI answer is temporarily unavailable" via 503, not a crash).
 
+17. **Dual-Persona AI Companion** (Module 3) - patient-only. No detailed spec exists for what the
+    two personas are, so picked two matching the product's own stated purpose (README overview:
+    reduce isolation, keep patients safe without constant phone calls): "Companion" (warm, casual,
+    targets loneliness) and "Coach" (upbeat, practical, nudges habits, lightly grounded in the
+    patient's real recent vitals trend via the existing `_recent_vitals_context()` helper). New
+    `CompanionMessage` model/migration, `routers/companion.py`, and a chat page with persona tabs
+    at `/companion/[patientId]`, linked from the dashboard (patient-only). Each persona keeps its
+    own separate thread so switching doesn't mix contexts. On a failed AI call, the user's message
+    is deliberately NOT persisted (every saved user turn has a matching reply) and the frontend
+    restores the draft text instead of losing it. Verified live: sent a message in the keyless dev
+    environment, got the correct "temporarily unavailable" error with the draft preserved and the
+    optimistic bubble rolled back cleanly; switching from Companion to Coach correctly loaded a
+    separate (empty) thread rather than the same one.
+
 
 Fixed and verified live (real DB + real browser sessions), on branch `fix/stabilize-and-polish`:
 
