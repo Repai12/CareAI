@@ -459,3 +459,22 @@ class MoodLogOut(BaseModel):
     logged_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ============================================================
+# AI PATIENT HISTORY Q&A (Module 3, doctor-only)
+# ============================================================
+
+class PatientQuestionCreate(BaseModel):
+    question: str
+
+
+class PatientQuestionOut(BaseModel):
+    id: uuid.UUID
+    patient_id: uuid.UUID
+    doctor_id: uuid.UUID
+    question: str
+    answer: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
