@@ -23,7 +23,7 @@ export default function VerifyEmailPage() {
   }, [params.token]);
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-paper">
+    <main className="min-h-screen flex items-center justify-center">
       <div className="bg-white border border-sageLight rounded-xl shadow-sm p-8 w-full max-w-sm text-center">
         {status === "checking" && (
           <>

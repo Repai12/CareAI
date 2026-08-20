@@ -4,7 +4,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Soft, warm canvas instead of a flat clinical off-white - the actual
+   content still sits in crisp white cards on top (see components using
+   bg-white), so this only ever affects the space between/behind them.
+   Kept deliberately subtle: a "care platform" should feel calm and
+   trustworthy, not busy - see the decorative shape layer in layout.tsx
+   for the rest of the effect. */
 body {
   background-color: #F4F7F6;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 15% 0%, rgba(228, 238, 233, 0.9), transparent 60%),
+    radial-gradient(ellipse 70% 60% at 100% 30%, rgba(199, 154, 59, 0.08), transparent 55%),
+    linear-gradient(180deg, #F7FAF8 0%, #F4F7F6 45%, #F0F4F1 100%);
+  background-attachment: fixed;
   color: #1B2430;
+  min-height: 100vh;
 }
