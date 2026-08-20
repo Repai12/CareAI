@@ -446,6 +446,28 @@ _COMPANION_SYSTEM_PROMPTS = {
 }
 
 
+def summarize_weekly_report(patient_name: str, vitals_summary: str, mood_summary: str, appt_count: int) -> str | None:
+    """AI Weekly Health Summary (README Features table, Module 3) - the
+    weekly report previously only ever sent a raw HTML table dump, never
+    an actual AI-written narrative despite README's naming. Returns None
+    (never raises) if Groq is unavailable - the report still sends with
+    just the raw tables, same graceful-degradation as every AI feature
+    in this file."""
+
+    prompt = f"""
+You are writing a short, warm weekly health summary for an elderly
+patient's family, based only on the real data below. 3-5 plain-English
+sentences: how the week looks overall, anything worth keeping an eye on,
+and one encouraging note. Do not invent anything not present below.
+
+Patient: {patient_name}
+Vitals this week: {vitals_summary}
+Mood this week: {mood_summary}
+Upcoming appointments: {appt_count}
+"""
+    return _call_groq(prompt)
+
+
 def companion_reply(db: Session, patient_id, persona: str, history: list, message: str) -> str | None:
     """Returns the companion's reply, or None (never raises) if Groq is
     unavailable. `history` is this persona's own prior turns as

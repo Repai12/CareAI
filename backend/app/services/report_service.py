@@ -12,13 +12,39 @@ from sqlalchemy.orm import Session
 from app.models.user import User, UserRole, CareLink, CareLinkStatus
 from app.models.vitals import VitalsLog
 from app.models.medication import Medication, Appointment
+from app.models.mood import MoodLog
 from app.models.email_log import EmailLog
 from app.services.email_service import send_email
 from app.services.notification_service import create_notification
 from app.models.notification import NotificationCategory
+from app.services.groq_health_service import summarize_weekly_report
 
 
-def _build_summary_html(patient: User, vitals: list[VitalsLog], meds: list[Medication], appts: list[Appointment]) -> str:
+def _vitals_summary_text(vitals: list[VitalsLog]) -> str:
+    if not vitals:
+        return "No vitals logged this week."
+    avg_sugar = sum(v.sugar_level for v in vitals) / len(vitals)
+    avg_hr = sum(v.heart_rate for v in vitals) / len(vitals)
+    return f"{len(vitals)} reading(s) logged, latest BP {vitals[-1].blood_pressure}, average sugar {avg_sugar:.0f} mg/dL, average heart rate {avg_hr:.0f} bpm."
+
+
+def _mood_summary_text(moods: list[MoodLog]) -> str:
+    if not moods:
+        return "No mood entries logged this week."
+    counts: dict[str, int] = {}
+    for m in moods:
+        counts[m.mood] = counts.get(m.mood, 0) + 1
+    breakdown = ", ".join(f"{count}x {mood}" for mood, count in counts.items())
+    return f"{len(moods)} entr{'y' if len(moods) == 1 else 'ies'} logged ({breakdown})."
+
+
+def _build_summary_html(
+    patient: User,
+    vitals: list[VitalsLog],
+    meds: list[Medication],
+    appts: list[Appointment],
+    ai_narrative: str | None,
+) -> str:
     vitals_rows = "".join(
         f"<tr><td>{v.logged_at.strftime('%d %b, %H:%M')}</td>"
         f"<td>{v.blood_pressure}</td><td>{v.sugar_level}</td>"
@@ -34,8 +60,18 @@ def _build_summary_html(patient: User, vitals: list[VitalsLog], meds: list[Medic
         f"<li>{a.doctor_name} on {a.appointment_date.strftime('%d %b %Y')} at {a.start_time.strftime('%H:%M')}</li>" for a in appts
     ) or "<li>No upcoming appointments</li>"
 
+    narrative_html = (
+        f"""<div style="background:#F4F7F6;border-left:4px solid #C79A3B;padding:12px 16px;margin-bottom:16px;">
+              <p style="margin:0 0 4px;font-size:12px;color:#888;">AI-generated summary, not a diagnosis - review before acting on it.</p>
+              <p style="margin:0;">{ai_narrative}</p>
+            </div>"""
+        if ai_narrative
+        else ""
+    )
+
     return f"""
     <h2>Weekly Health Report for {patient.name}</h2>
+    {narrative_html}
     <h3>Vitals (last 7 days)</h3>
     <table border="1" cellpadding="6" cellspacing="0">
       <tr><th>Date</th><th>BP</th><th>Sugar</th><th>Heart Rate</th><th>Temp</th></tr>
@@ -71,8 +107,23 @@ def generate_weekly_report(db: Session, patient_id) -> list[EmailLog]:
         .filter(Appointment.patient_email == patient.email, Appointment.appointment_date >= datetime.utcnow().date())
         .all()
     )
+    moods = (
+        db.query(MoodLog)
+        .filter(MoodLog.patient_id == patient_id, MoodLog.logged_at >= week_ago)
+        .order_by(MoodLog.logged_at)
+        .all()
+    )
 
-    html = _build_summary_html(patient, vitals, meds, appts)
+    # README names this feature "AI weekly health summaries" - the report
+    # previously only ever sent raw tables, no actual AI narrative.
+    # Grounded only in this week's real data; None (Groq unavailable)
+    # degrades gracefully to just the tables, same as every other AI
+    # feature in this app.
+    ai_narrative = summarize_weekly_report(
+        patient.name, _vitals_summary_text(vitals), _mood_summary_text(moods), len(appts)
+    )
+
+    html = _build_summary_html(patient, vitals, meds, appts, ai_narrative)
 
     recipients = (
         db.query(User)
