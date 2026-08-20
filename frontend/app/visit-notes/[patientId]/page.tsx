@@ -12,6 +12,7 @@ import {
   type VisitNoteInput,
 } from "@/lib/api";
 import { getMyRole, getMyUserId } from "@/lib/apiClient";
+import PatientQaPanel from "@/components/PatientQaPanel";
 
 const EMPTY_NOTE: VisitNoteInput = { visit_date: "", notes: "", prescription: "" };
 
@@ -233,6 +234,12 @@ export default function VisitNotesPage() {
           );
         })}
       </ul>
+
+      {isDoctor && (
+        <div className="mt-8">
+          <PatientQaPanel patientId={patientId} />
+        </div>
+      )}
 
       <button onClick={() => router.back()} className="inline-block mt-8 text-sm text-sage font-medium hover:underline">
         Back

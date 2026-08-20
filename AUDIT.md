@@ -30,6 +30,21 @@ already be covered by `VisitNote.notes` - not a real gap.)
     result - confirms the graceful-degradation path works even though the happy path (an actual
     Groq key) is untested here, same limitation as the AI Symptom Checker/Diet Advisor before it.
 
+16. **AI Patient History Q&A** (Module 3) - doctor-only, matching README's role line verbatim
+    ("Doctor ... uses AI to analyze reports, answers patient-history questions"). New
+    `PatientQuestion` model/migration, `routers/patient_qa.py` (doctor + actively-managing-linked
+    only, same permission bar as writing visit notes), and an `answer_patient_question()` helper
+    grounding every answer in the patient's real latest vitals, active medications, recent visit
+    notes, and recent symptom checks - not a generic response. Added a panel to the doctor's
+    visit-notes page. Live testing caught two real bugs before they shipped: the new
+    `PatientQaPanel` imported `StethoscopeIcon` from the wrong `icons.tsx` (the shared
+    `components/icons.tsx` doesn't export it - that one only exists in the Health module's local
+    icon file) which crashed the whole page with a blank screen, and the context-builder read
+    `Medication.name`/`.dosage` when the real column is `medicine_name` - both would have been
+    invisible without actually loading the page and asking a question, not just reading the code
+    back. Fixed both, then verified the graceful-failure path end-to-end (keyless dev environment
+    correctly returns "AI answer is temporarily unavailable" via 503, not a crash).
+
 
 Fixed and verified live (real DB + real browser sessions), on branch `fix/stabilize-and-polish`:
 

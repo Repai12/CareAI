@@ -23,3 +23,4 @@ export * from "./api/medicationLogs";
 export * from "./api/visitNotes";
 export * from "./api/emergency";
 export * from "./api/mood";
+export * from "./api/patientQa";

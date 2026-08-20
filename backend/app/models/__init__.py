@@ -14,3 +14,4 @@ from app.models.fall_incident import FallIncident
 from app.models.safety_checkin import SafetyCheckin
 from app.models.notification import Notification
 from app.models.mood import MoodLog, MoodLevel
+from app.models.patient_qa import PatientQuestion

@@ -393,3 +393,30 @@ Doctor's note and prescription:
 {combined[:4000]}
 """
     return _call_groq(prompt)
+
+
+# ---------------------------------------------------------------------------
+# AI Patient History Q&A (README Features table, Module 3) - doctor-only.
+# Grounds the answer in the patient's actual recent records rather than
+# a generic response, same "real data, not generic" principle as the
+# diet advisor/symptom checker above.
+# ---------------------------------------------------------------------------
+
+def answer_patient_question(patient_context: str, question: str) -> str | None:
+    """Returns Groq's answer to a doctor's free-text question about a
+    patient's history, or None (never raises) if Groq is unavailable."""
+
+    prompt = f"""
+You are helping a doctor quickly answer a question about their patient's
+history, grounded ONLY in the records below - do not invent anything not
+present. If the records don't contain enough information to answer
+confidently, say so plainly rather than guessing. Answer in 2-5 plain
+sentences.
+
+Patient records:
+{patient_context[:6000]}
+
+Doctor's question:
+{question}
+"""
+    return _call_groq(prompt)
