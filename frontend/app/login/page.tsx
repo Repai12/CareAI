@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { login, getMyPatients, resendVerification } from "@/lib/api";
+import AuthBackdrop from "@/components/AuthBackdrop";
 
 type DemoRole = "patient" | "doctor" | "family";
 
@@ -66,10 +67,10 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center">
-      <form onSubmit={handleSubmit} className="bg-white border border-sageLight rounded-xl shadow-sm p-8 w-full max-w-sm">
+    <AuthBackdrop>
+      <form onSubmit={handleSubmit} className="bg-white/95 backdrop-blur-sm border border-sageLight rounded-xl shadow-lg p-8 w-full max-w-sm">
         <h1 className="text-2xl font-display font-semibold text-ink mb-1">CareAI</h1>
-        <p className="text-ink/50 text-sm mb-6">Sign in to your health dashboard</p>
+        <p className="text-ink/50 text-sm mb-6">Caring for the people you love, together</p>
 
         <label className="block text-sm text-ink/70 mb-2">I am signing in as</label>
         <div className="grid grid-cols-3 gap-2 mb-5">
@@ -147,6 +148,6 @@ export default function LoginPage() {
           </Link>
         </p>
       </form>
-    </main>
+    </AuthBackdrop>
   );
 }
