@@ -6,6 +6,7 @@ import Link from "next/link";
 import { getMyPatients, getDashboard, getNotifications, type MyPatient, type DashboardResponse } from "@/lib/api";
 import { getMyRole } from "@/lib/apiClient";
 import StatusBadge from "@/components/StatusBadge";
+import LogoutButton from "@/components/LogoutButton";
 
 interface PatientRow {
   patient: MyPatient;
@@ -91,12 +92,15 @@ export default function PatientsListPage() {
 
   return (
     <main className="min-h-screen px-6 py-10 max-w-3xl mx-auto">
-      <header className="mb-6">
-        <p className="text-sm text-sage font-medium">CareAI</p>
-        <h1 className="text-2xl font-display font-bold text-ink mt-0.5">
-          {role === "doctor" ? "Your patients" : "Your linked patients"}
-        </h1>
-        {role === "doctor" && <p className="text-ink/50 text-sm mt-1">Flagged/urgent patients are shown first.</p>}
+      <header className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm text-sage font-medium">CareAI</p>
+          <h1 className="text-2xl font-display font-bold text-ink mt-0.5">
+            {role === "doctor" ? "Your patients" : "Your linked patients"}
+          </h1>
+          {role === "doctor" && <p className="text-ink/50 text-sm mt-1">Flagged/urgent patients are shown first.</p>}
+        </div>
+        <LogoutButton />
       </header>
 
       {!rows && <p className="text-ink/50 text-sm">Loading...</p>}
