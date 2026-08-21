@@ -52,7 +52,7 @@ export default function VitalsPanel({
   }
 
   return (
-    <SectionCard eyebrow="Feature 1 · CRUD" title="Vitals Logging" icon={<ClipboardIcon />} accent="steel">
+    <SectionCard eyebrow="Daily Tracking" title="Vitals Logging" icon={<ClipboardIcon />} accent="steel">
       {isOwner && (
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-2 mb-4">
           <input

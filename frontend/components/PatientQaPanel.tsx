@@ -41,7 +41,7 @@ export default function PatientQaPanel({ patientId }: { patientId: string }) {
 
   return (
     <SectionCard
-      eyebrow="AI Patient History Q&A"
+      eyebrow="AI-Powered"
       title="Ask about this patient's history"
       icon={<HeartPulseIcon />}
       accent="steel"

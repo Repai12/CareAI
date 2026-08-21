@@ -97,7 +97,7 @@ export default function HealthOverviewPage() {
       href: `/health/${patientId}/vitals`,
       icon: ClipboardIcon,
       accent: "text-steel bg-steel/10",
-      eyebrow: "Feature 1 · CRUD",
+      eyebrow: "Daily Tracking",
       title: "Vitals Logging",
       detail: summary.vitalsCount > 0 ? `${summary.vitalsCount} readings logged · latest: ${summary.latestVitals}` : "No vitals logged yet",
     },
@@ -105,7 +105,7 @@ export default function HealthOverviewPage() {
       href: `/health/${patientId}/reports`,
       icon: DocumentSearchIcon,
       accent: "text-gold bg-gold/15",
-      eyebrow: "Feature 2 · Groq API LIVE",
+      eyebrow: "AI-Powered",
       title: "AI Health Report Analyzer",
       detail: summary.reportsCount > 0 ? `${summary.reportsCount} report(s) analyzed` : "No reports uploaded yet",
     },
@@ -113,7 +113,7 @@ export default function HealthOverviewPage() {
       href: `/health/${patientId}/symptoms`,
       icon: StethoscopeIcon,
       accent: "text-alert bg-alert/10",
-      eyebrow: "Feature 3 · Groq, vitals-aware + auto-escalation",
+      eyebrow: "AI-Powered",
       title: "AI Symptom Checker",
       detail: summary.symptomsCount > 0 ? `${summary.symptomsCount} check(s) · last urgency: ${summary.lastUrgency}` : "No symptom checks yet",
     },
@@ -121,7 +121,7 @@ export default function HealthOverviewPage() {
       href: `/health/${patientId}/diet`,
       icon: LeafIcon,
       accent: "text-sage bg-sageLight",
-      eyebrow: "Feature 4 · Groq, trend-aware + adherence tracking",
+      eyebrow: "AI-Powered",
       title: "AI Diet Advisor",
       detail: summary.hasDietPlan
         ? `Plan active${summary.adherenceRate !== null ? ` · ${summary.adherenceRate}% adherence` : ""}`
@@ -131,7 +131,7 @@ export default function HealthOverviewPage() {
       href: `/health/${patientId}/mood`,
       icon: SmileIcon,
       accent: "text-gold bg-gold/15",
-      eyebrow: "Module 1 · Mood Tracking",
+      eyebrow: "Daily Tracking",
       title: "Mood Tracking",
       detail: summary.moodCount > 0
         ? `${summary.moodCount} ${summary.moodCount === 1 ? "entry" : "entries"} logged · latest: ${summary.latestMood}`
@@ -141,7 +141,7 @@ export default function HealthOverviewPage() {
       href: `/health/${patientId}/activity`,
       icon: ActivityIcon,
       accent: "text-steel bg-steel/10",
-      eyebrow: "Module 1 · Activity Tracking",
+      eyebrow: "Daily Tracking",
       title: "Activity Tracking",
       detail: summary.activityCount > 0
         ? `${summary.activityMinutesThisWeek} min this week · ${summary.activityCount} total entries`
@@ -151,7 +151,7 @@ export default function HealthOverviewPage() {
       href: `/health/${patientId}/wellness`,
       icon: SparkleIcon,
       accent: "text-gold bg-gold/15",
-      eyebrow: "Module 2 · Wellness Recommendation Engine",
+      eyebrow: "AI-Powered",
       title: "Wellness Tips",
       detail: summary.hasWellnessTips ? "Recommendations available" : "No wellness tips generated yet",
     },
@@ -160,7 +160,7 @@ export default function HealthOverviewPage() {
   return (
     <main className="min-h-screen px-6 py-10 max-w-5xl mx-auto">
       <header className="mb-2">
-        <p className="text-sm text-sage font-medium">CareAI · Health Module (Member 1)</p>
+        <p className="text-sm text-sage font-medium">CareAI · Health Module</p>
         <h1 className="text-3xl font-display font-bold text-ink mt-0.5">Vitals, AI Reports, Symptoms &amp; Diet</h1>
       </header>
 

@@ -35,7 +35,7 @@ export default function ReportAnalyzerPanel({
 
   return (
     <SectionCard
-      eyebrow="Feature 2 · Groq API LIVE"
+      eyebrow="AI-Powered"
       title="AI Health Report Analyzer"
       icon={<DocumentSearchIcon />}
       accent="gold"

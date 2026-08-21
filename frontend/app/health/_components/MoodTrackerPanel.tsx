@@ -63,7 +63,7 @@ export default function MoodTrackerPanel({
   }
 
   return (
-    <SectionCard eyebrow="Module 1 · Mood Tracking" title="How are you feeling?" icon={<SmileIcon />} accent="gold">
+    <SectionCard eyebrow="Daily Tracking" title="How are you feeling?" icon={<SmileIcon />} accent="gold">
       {isOwner && (
         <div className="mb-5">
           <div className="grid grid-cols-5 gap-2 mb-3">

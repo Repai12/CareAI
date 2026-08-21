@@ -31,7 +31,7 @@ export default function AISummaryPanel({ patientId }: { patientId: string }) {
 
   return (
     <SectionCard
-      eyebrow="Gemini + Resend"
+      eyebrow="AI-Powered"
       title="AI Patient Summary"
       icon={<MailIcon />}
       accent="steel"

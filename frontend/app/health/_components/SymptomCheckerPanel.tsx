@@ -145,7 +145,7 @@ export default function SymptomCheckerPanel({
 
   return (
     <SectionCard
-      eyebrow="Feature 3 · Groq, vitals-aware + auto-escalation"
+      eyebrow="AI-Powered"
       title="AI Symptom Checker"
       icon={<StethoscopeIcon />}
       accent="alert"
