@@ -339,6 +339,26 @@ Cloud OAuth credentials to test the actual flow against. Family Chat's connectio
 in-memory/single-process by design (documented in `chat_manager.py`) — fine for this project's
 scale, would need a shared pub/sub layer if it ever ran behind multiple workers.
 
+28. **UI polish pass: dev-jargon cleanup, missing back-navigation, and a warm photo-based
+    background** — prompted by a user-supplied reference screenshot of an elderly-care landing
+    page. Three parts: (1) swept every leftover internal/team label out of user-facing text — e.g.
+    the Health module's eyebrow read `CareAI · Health Module (Member 1)` and per-feature eyebrows
+    read things like `Module 3, Feature 7`/`Gemini + Resend`, none of which mean anything to an
+    actual patient/family member/doctor; replaced with plain labels (`Daily Tracking`,
+    `AI-Powered`, `Weekly Summary`). (2) The notifications page and the multi-patient list page
+    were the only two pages in the app with no way back to the dashboard and no visible sign-out
+    control — added a "Dashboard" link and `LogoutButton` to match every other page. (3) Added a
+    `AuthBackdrop` component wrapping login/register/forgot-password/reset-password/verify-email
+    in a full-bleed photo (a free-license Unsplash photo of a caregiver with an elderly couple —
+    directly on-theme, no attribution required) behind a dark scrim, and echoed the same photo at
+    ~5% opacity/grayscale into the sitewide decorative background layer in `layout.tsx` so every
+    authenticated page carries a quiet, consistent reminder of who the app is for — kept
+    deliberately faint so it never competes with card/text contrast, same principle as the
+    existing blurred color shapes it sits alongside. Verified live end-to-end: logged in as the
+    demo doctor account, confirmed the photo backgrounds render correctly on desktop and mobile
+    viewports (375px), confirmed the Health module and notifications pages read cleanly with
+    working back-navigation, and checked the browser console for errors (none).
+
 ---
 
 # Phase 1 audit (original, 2026-08-20)
