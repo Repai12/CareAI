@@ -83,7 +83,7 @@ export default function ActivityTrackerPanel({
   const maxMinutes = Math.max(...trend.map((d) => d.minutes), 30);
 
   return (
-    <SectionCard eyebrow="Module 1 · Activity Tracking" title="Daily activity" icon={<ActivityIcon />} accent="steel">
+    <SectionCard eyebrow="Daily Tracking" title="Daily activity" icon={<ActivityIcon />} accent="steel">
       {isOwner && (
         <form onSubmit={handleLog} className="mb-5 flex flex-wrap items-end gap-2">
           <div className="flex gap-1">

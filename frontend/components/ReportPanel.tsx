@@ -33,7 +33,7 @@ export default function ReportPanel({
   }
 
   return (
-    <SectionCard eyebrow="Resend" title="Weekly Email Health Report" icon={<MailIcon />} accent="sage">
+    <SectionCard eyebrow="Weekly Summary" title="Weekly Email Health Report" icon={<MailIcon />} accent="sage">
       {canTrigger && (
         <button
           onClick={handleSendNow}

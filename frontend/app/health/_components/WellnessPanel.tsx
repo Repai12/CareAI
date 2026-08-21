@@ -33,7 +33,7 @@ export default function WellnessPanel({
 
   return (
     <SectionCard
-      eyebrow="Module 2 · Wellness Recommendation Engine"
+      eyebrow="AI-Powered"
       title="Wellness tips"
       icon={<SparkleIcon />}
       accent="gold"
