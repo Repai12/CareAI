@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { resetPassword } from "@/lib/api";
+import AuthBackdrop from "@/components/AuthBackdrop";
 
 export default function ResetPasswordPage() {
   const params = useParams<{ token: string }>();
@@ -34,8 +35,8 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center">
-      <div className="bg-white border border-sageLight rounded-xl shadow-sm p-8 w-full max-w-sm">
+    <AuthBackdrop>
+      <div className="bg-white/95 backdrop-blur-sm border border-sageLight rounded-xl shadow-lg p-8 w-full max-w-sm">
         <h1 className="text-2xl font-display font-semibold text-ink mb-1">Set a new password</h1>
 
         {done ? (
@@ -75,6 +76,6 @@ export default function ResetPasswordPage() {
           </Link>
         </p>
       </div>
-    </main>
+    </AuthBackdrop>
   );
 }

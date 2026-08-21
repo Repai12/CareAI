@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { register, type RegisterResponse } from "@/lib/api";
+import AuthBackdrop from "@/components/AuthBackdrop";
 
 type Role = "patient" | "family" | "doctor";
 
@@ -42,8 +43,8 @@ export default function RegisterPage() {
 
   if (result) {
     return (
-      <main className="min-h-screen flex items-center justify-center">
-        <div className="bg-white border border-sageLight rounded-xl shadow-sm p-8 w-full max-w-sm text-center">
+      <AuthBackdrop>
+        <div className="bg-white/95 backdrop-blur-sm border border-sageLight rounded-xl shadow-lg p-8 w-full max-w-sm text-center">
           <h1 className="text-2xl font-display font-semibold text-ink mb-2">Check your email</h1>
           <p className="text-ink/60 text-sm mb-4">
             We sent a verification link to <span className="font-medium">{email}</span>. Click it to activate your
@@ -66,15 +67,15 @@ export default function RegisterPage() {
             Go to sign in
           </Link>
         </div>
-      </main>
+      </AuthBackdrop>
     );
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center py-10">
+    <AuthBackdrop>
       <form
         onSubmit={handleSubmit}
-        className="bg-white border border-sageLight rounded-xl shadow-sm p-8 w-full max-w-sm"
+        className="bg-white/95 backdrop-blur-sm border border-sageLight rounded-xl shadow-lg p-8 w-full max-w-sm"
       >
         <h1 className="text-2xl font-display font-semibold text-ink mb-1">Create account</h1>
         <p className="text-ink/50 text-sm mb-6">Join CareAI</p>
@@ -176,6 +177,6 @@ export default function RegisterPage() {
           </Link>
         </p>
       </form>
-    </main>
+    </AuthBackdrop>
   );
 }

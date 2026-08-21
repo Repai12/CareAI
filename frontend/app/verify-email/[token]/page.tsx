@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { verifyEmail, resendVerification } from "@/lib/api";
+import AuthBackdrop from "@/components/AuthBackdrop";
 
 export default function VerifyEmailPage() {
   const params = useParams<{ token: string }>();
@@ -47,8 +48,8 @@ export default function VerifyEmailPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center">
-      <div className="bg-white border border-sageLight rounded-xl shadow-sm p-8 w-full max-w-sm text-center">
+    <AuthBackdrop>
+      <div className="bg-white/95 backdrop-blur-sm border border-sageLight rounded-xl shadow-lg p-8 w-full max-w-sm text-center">
         {status === "checking" && (
           <>
             <h1 className="text-2xl font-display font-semibold text-ink mb-2">Verifying...</h1>
@@ -97,6 +98,6 @@ export default function VerifyEmailPage() {
           </>
         )}
       </div>
-    </main>
+    </AuthBackdrop>
   );
 }

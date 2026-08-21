@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { forgotPassword } from "@/lib/api";
+import AuthBackdrop from "@/components/AuthBackdrop";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -24,8 +25,8 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center">
-      <div className="bg-white border border-sageLight rounded-xl shadow-sm p-8 w-full max-w-sm">
+    <AuthBackdrop>
+      <div className="bg-white/95 backdrop-blur-sm border border-sageLight rounded-xl shadow-lg p-8 w-full max-w-sm">
         <h1 className="text-2xl font-display font-semibold text-ink mb-1">Reset your password</h1>
         <p className="text-ink/50 text-sm mb-6">
           Enter your account email and we&apos;ll send you a reset link.
@@ -61,6 +62,6 @@ export default function ForgotPasswordPage() {
           </Link>
         </p>
       </div>
-    </main>
+    </AuthBackdrop>
   );
 }
