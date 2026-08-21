@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { getNotifications, markNotificationsRead, NotificationOut } from "@/lib/api/notifications";
+import LogoutButton from "@/components/LogoutButton";
 
 const CATEGORIES = [
   { value: "", label: "All" },
@@ -56,6 +58,18 @@ export default function NotificationsPage() {
 
   return (
     <main className="min-h-screen px-6 py-10 max-w-3xl mx-auto">
+      <nav className="flex flex-wrap items-center gap-2 mb-6">
+        <Link
+          href={`/dashboard/${patientId}`}
+          className="text-xs font-medium text-ink/50 hover:text-sage border border-sageLight rounded-full px-3 py-1.5 transition"
+        >
+          ← Dashboard
+        </Link>
+        <div className="ml-auto">
+          <LogoutButton />
+        </div>
+      </nav>
+
       <header className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <div>
           <p className="text-sm text-sage font-medium">CareAI · Family Notification Center</p>
