@@ -15,7 +15,6 @@ from app.models.safety_checkin import SafetyCheckin
 from app.models.notification import Notification
 from app.models.mood import MoodLog, MoodLevel
 from app.models.patient_qa import PatientQuestion
-from app.models.companion import CompanionMessage, CompanionPersona, CompanionRole
 from app.models.chat import ChatMessage
 from app.models.activity import ActivityLog, ActivityType
 from app.models.wellness import WellnessRecommendation

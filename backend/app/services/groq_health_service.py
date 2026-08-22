@@ -422,30 +422,6 @@ Doctor's question:
     return _call_groq(prompt)
 
 
-# ---------------------------------------------------------------------------
-# Dual-Persona AI Companion (README Features table, Module 3) - patient-
-# only. Two personas, each its own separate conversation thread (the
-# caller passes only that persona's own history).
-# ---------------------------------------------------------------------------
-
-_COMPANION_SYSTEM_PROMPTS = {
-    "companion": (
-        "You are a warm, friendly companion for an elderly patient, here to keep "
-        "them company and ease loneliness. Chat casually - ask about their day, "
-        "listen, respond with genuine warmth. Keep replies short (2-4 sentences), "
-        "plain English, no medical advice."
-    ),
-    "coach": (
-        "You are an upbeat, practical health coach for an elderly patient. "
-        "Encourage medication adherence, light activity, and healthy habits, "
-        "grounded in the vitals trend context you're given if any. Keep replies "
-        "short (2-4 sentences), plain English, positive and non-judgmental. Not "
-        "a doctor - never diagnose, always suggest checking with their doctor for "
-        "anything medical."
-    ),
-}
-
-
 def summarize_weekly_report(
     patient_name: str, vitals_summary: str, mood_summary: str, appt_count: int, active_med_count: int
 ) -> str | None:
@@ -530,31 +506,3 @@ Recent mood: {mood_trend}
 Recent activity: {activity_trend}
 """
     return {"based_on_summary": based_on_summary, "recommendations": _call_groq(prompt)}
-
-
-def companion_reply(db: Session, patient_id, persona: str, history: list, message: str) -> str | None:
-    """Returns the companion's reply, or None (never raises) if Groq is
-    unavailable. `history` is this persona's own prior turns as
-    {"role": "user"|"assistant", "content": ...} dicts, oldest first."""
-
-    system_prompt = _COMPANION_SYSTEM_PROMPTS.get(persona, _COMPANION_SYSTEM_PROMPTS["companion"])
-    if persona == "coach":
-        system_prompt += f"\n\nPatient's recent vitals trend: {_recent_vitals_context(db, patient_id)}"
-
-    messages = [{"role": "system", "content": system_prompt}] + history
-    client = _get_client()
-    if client is None:
-        return None
-    try:
-        response = client.chat.completions.create(
-            model=GROQ_MODEL,
-            messages=messages + [{"role": "user", "content": message}],
-            temperature=0.7,
-            max_tokens=300,
-            reasoning_effort="low",
-        )
-        content = response.choices[0].message.content
-        return content if content else None
-    except Exception as e:  # noqa: BLE001 - deliberately broad, mirrors _call_groq above
-        print(f"[Groq error] {e}")
-        return None

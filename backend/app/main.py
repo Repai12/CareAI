@@ -29,7 +29,6 @@ from app.routers import (
     notifications,
     mood,
     patient_qa,
-    companion,
     chat,
     activity,
     wellness,
@@ -87,7 +86,6 @@ app.include_router(reports.router)
 app.include_router(ai_summary.router)
 app.include_router(mood.router)
 app.include_router(patient_qa.router)
-app.include_router(companion.router)
 app.include_router(chat.router)
 app.include_router(activity.router)
 app.include_router(wellness.router)

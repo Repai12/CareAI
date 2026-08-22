@@ -128,14 +128,6 @@ export default function DashboardPage() {
           >
             Visit Notes
           </Link>
-          {role === "patient" && (
-            <Link
-              href={`/companion/${patientId}`}
-              className="text-xs font-medium text-sage border border-sageLight rounded-full px-3 py-1.5 hover:bg-sageLight transition"
-            >
-              AI Companion
-            </Link>
-          )}
           <Link
             href={`/chat/${patientId}`}
             className="text-xs font-medium text-sage border border-sageLight rounded-full px-3 py-1.5 hover:bg-sageLight transition"

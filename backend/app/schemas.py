@@ -525,25 +525,6 @@ class PatientQuestionOut(BaseModel):
 
 
 # ============================================================
-# DUAL-PERSONA AI COMPANION (Module 3, patient-only)
-# ============================================================
-
-class CompanionMessageCreate(BaseModel):
-    persona: str  # "companion" or "coach"
-    message: str
-
-
-class CompanionMessageOut(BaseModel):
-    id: uuid.UUID
-    persona: str
-    role: str
-    content: str
-    created_at: datetime
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-# ============================================================
 # FAMILY CHAT (Module 3, WebSockets)
 # ============================================================
 
