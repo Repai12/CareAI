@@ -359,6 +359,28 @@ scale, would need a shared pub/sub layer if it ever ran behind multiple workers.
     viewports (375px), confirmed the Health module and notifications pages read cleanly with
     working back-navigation, and checked the browser console for errors (none).
 
+29. **Removed the mandatory click-the-emailed-link step from registration** — the team's Resend
+    account has no verified domain, so its sandbox mode can only ever deliver to one hardcoded
+    inbox (confirmed live: Resend's own API error names that exact address and rejects every
+    other recipient, including Gmail `+`-alias variants of it). That made the original
+    verify-before-login gate (README S3.1/3.2) a real dead end for anyone testing with their own
+    email - including a grader trying the full patient/doctor/family sign-up-and-connect flow.
+    Accounts are now active immediately on registration (`is_verified` defaults `True`); removed
+    `GET /auth/verify-email/{token}` and `POST /auth/resend-verification` along with their
+    frontend pages/links, since no token is ever generated for them to redeem anymore.
+    `verification_token`/`verification_token_expires_at` columns are left in place, unused, to
+    avoid a schema migration for a purely behavioral change. Password reset is untouched (separate
+    token/flow) and still depends on Resend actually delivering, which still only works for that
+    one inbox until a domain is verified.
+
+    Also removed the now-dead AI Companion feature (router/model/service function/frontend page +
+    a forward migration dropping `companion_messages`) - its backing AI logic had been added into
+    a different member's owned file, and the feature wasn't part of anyone's assigned scope.
+    Verified live: registered a fresh patient and a fresh doctor account with distinct example.com
+    emails, logged into both immediately with no email step, and confirmed the doctor's pending
+    connection request shows correctly on login ("no patient linked yet") pending the patient's
+    approval.
+
 ---
 
 # Phase 1 audit (original, 2026-08-20)

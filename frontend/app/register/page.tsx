@@ -31,8 +31,6 @@ export default function RegisterPage() {
         patient_code: role !== "patient" ? patientCode : undefined,
         license_number: role === "doctor" ? licenseNumber : undefined,
       });
-      // Accounts require email verification before they can log in - no
-      // auto-login here, since /auth/login would just reject it (S3.1).
       setResult(registerRes);
     } catch (err: any) {
       setError(err.message || "Registration failed");
@@ -45,15 +43,14 @@ export default function RegisterPage() {
     return (
       <AuthBackdrop>
         <div className="bg-white/95 backdrop-blur-sm border border-sageLight rounded-xl shadow-lg p-8 w-full max-w-sm text-center">
-          <h1 className="text-2xl font-display font-semibold text-ink mb-2">Check your email</h1>
+          <h1 className="text-2xl font-display font-semibold text-ink mb-2">Account created</h1>
           <p className="text-ink/60 text-sm mb-4">
-            We sent a verification link to <span className="font-medium">{email}</span>. Click it to activate your
-            account, then sign in.
+            Your account is ready. Sign in with <span className="font-medium">{email}</span> to get started.
           </p>
           {result.patient_code && (
             <>
               <p className="text-ink/60 text-sm mb-2">
-                Once verified, share this code with family members or your doctor so they can link to your account:
+                Share this code with family members or your doctor so they can link to your account:
               </p>
               <p className="text-2xl font-display font-bold text-sage tracking-wide mb-4">{result.patient_code}</p>
             </>

@@ -49,12 +49,17 @@ class User(Base):
     # family/doctor accounts to link themselves to this patient.
     patient_code = Column(String, unique=True, nullable=True, index=True)
 
-    # Registration -> pending_verification (is_verified=False) until the
-    # emailed verification link is clicked; login is rejected until then
-    # (README S3.1/3.2). Doctors are additionally "unverified" in the
+    # Email-click verification-before-login was removed: with only a
+    # single-recipient Resend sandbox account (no verified domain), nobody
+    # but the team's own test inbox could ever receive the link, which
+    # made it impossible for anyone else (e.g. a grader) to sign up with
+    # their own email and get in. Accounts are active immediately on
+    # registration now. verification_token/_expires_at are unused leftover
+    # columns - kept rather than migrated away since nothing else in the
+    # app touches them. Doctors are separately "unverified" in the
     # clinical sense (no license-registry check) regardless of this flag -
     # see UserRole.doctor handling in routers/auth.py.
-    is_verified = Column(Boolean, nullable=False, default=False)
+    is_verified = Column(Boolean, nullable=False, default=True)
     verification_token = Column(String, nullable=True, index=True)
     verification_token_expires_at = Column(DateTime, nullable=True)
 

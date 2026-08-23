@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { login, getMyPatients, resendVerification } from "@/lib/api";
+import { login, getMyPatients } from "@/lib/api";
 import AuthBackdrop from "@/components/AuthBackdrop";
 
 type DemoRole = "patient" | "doctor" | "family";
@@ -22,26 +22,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState("password123");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [resendStatus, setResendStatus] = useState<"idle" | "sending" | "sent">("idle");
 
   function handleRoleSelect(r: DemoRole) {
     setRole(r);
     setEmail(DEMO_ACCOUNTS[r].email);
   }
 
-  async function handleResend() {
-    setResendStatus("sending");
-    try {
-      await resendVerification(email);
-    } finally {
-      setResendStatus("sent");
-    }
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    setResendStatus("idle");
     setLoading(true);
     try {
       await login(email, password);
@@ -114,22 +103,6 @@ export default function LoginPage() {
         {error && (
           <div className="mb-3">
             <p className="text-alert text-sm">{error}</p>
-            {error.toLowerCase().includes("verify your email") && (
-              <div className="mt-1.5">
-                {resendStatus === "sent" ? (
-                  <p className="text-xs text-sage">If that email is registered and not yet verified, a new link has been sent.</p>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleResend}
-                    disabled={resendStatus === "sending"}
-                    className="text-xs text-sage font-medium hover:underline disabled:opacity-50"
-                  >
-                    {resendStatus === "sending" ? "Sending..." : "Resend verification email"}
-                  </button>
-                )}
-              </div>
-            )}
           </div>
         )}
 

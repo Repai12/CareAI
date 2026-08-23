@@ -11,7 +11,6 @@ export interface RegisterResponse {
   email: string;
   role: string;
   patient_code?: string | null;
-  is_verified: boolean;
   doctor_unverified_notice?: string | null;
 }
 
@@ -43,17 +42,6 @@ export function register(payload: {
     method: "POST",
     body: JSON.stringify(payload),
   }) as Promise<RegisterResponse>;
-}
-
-export function verifyEmail(token: string) {
-  return apiFetch(`/auth/verify-email/${token}`) as Promise<{ message: string }>;
-}
-
-export function resendVerification(email: string) {
-  return apiFetch(`/auth/resend-verification`, {
-    method: "POST",
-    body: JSON.stringify({ email }),
-  }) as Promise<{ message: string }>;
 }
 
 export function forgotPassword(email: string) {

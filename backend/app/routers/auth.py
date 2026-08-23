@@ -1,8 +1,8 @@
 """
 routers/auth.py
 -----------------
-SHARED FILE - registration, login, email verification, password reset,
-and session management (refresh/logout) for all roles.
+SHARED FILE - registration, login, password reset, and session management
+(refresh/logout) for all roles.
 
 Registration behavior:
 - role = patient  -> gets a fresh, unique patient_code (e.g. CARE-8921),
@@ -13,6 +13,12 @@ Registration behavior:
 - role = doctor -> flagged unverified (README S13 "known gap"): a license
   number is required but never checked against a real registry, so the
   response includes a warning the frontend should render as a badge.
+- Accounts are usable immediately after registration - no emailed
+  verification link to click. That gate existed originally (README
+  S3.1/3.2) but was dropped: the team's Resend account has no verified
+  domain, so its sandbox mode can only deliver to one hardcoded inbox -
+  nobody else (teammates testing with their own address, a grader) could
+  ever receive the link, permanently locking their own account out.
 
 Session model (README S3.2/3.4):
 - POST /login returns a short-lived access token in the JSON body (15
@@ -57,7 +63,6 @@ from app.services.email_service import send_email
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 REFRESH_COOKIE_NAME = "refresh_token"
-VERIFICATION_TOKEN_TTL_HOURS = 24
 RESET_TOKEN_TTL_HOURS = 1
 
 
@@ -76,10 +81,6 @@ class LoginRequest(BaseModel):
 
 
 class ForgotPasswordRequest(BaseModel):
-    email: EmailStr
-
-
-class ResendVerificationRequest(BaseModel):
     email: EmailStr
 
 
@@ -152,7 +153,6 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
                 "No patient found with that code. Double check the code with the patient.",
             )
 
-    verification_token = generate_email_token()
     user = User(
         id=uuid.uuid4(),
         name=payload.name,
@@ -160,9 +160,6 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
         hashed_password=hash_password(payload.password),
         role=payload.role.value,
         patient_code=new_patient_code,
-        is_verified=False,
-        verification_token=verification_token,
-        verification_token_expires_at=datetime.utcnow() + timedelta(hours=VERIFICATION_TOKEN_TTL_HOURS),
     )
     db.add(user)
     db.flush()
@@ -198,85 +195,17 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
             category=NotificationCategory.connection,
         )
 
-    verify_url = f"{settings.FRONTEND_URL}/verify-email/{verification_token}"
-    _try_send_email(
-        to_email=user.email,
-        subject="Verify your CareAI account",
-        html_content=(
-            f"<p>Hi {user.name},</p>"
-            f"<p>Confirm your email to activate your CareAI account:</p>"
-            f'<p><a href="{verify_url}">{verify_url}</a></p>'
-            f"<p>This link expires in {VERIFICATION_TOKEN_TTL_HOURS} hours.</p>"
-        ),
-    )
-
     return {
         "id": str(user.id),
         "email": user.email,
         "role": user.role,
         "patient_code": user.patient_code,
-        "is_verified": user.is_verified,
         "doctor_unverified_notice": (
             "Doctor accounts are not checked against a real license registry in this "
             "version - your account is marked unverified until an admin reviews it."
             if payload.role == UserRole.doctor else None
         ),
     }
-
-
-@router.get("/verify-email/{token}")
-def verify_email(token: str, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.verification_token == token).first()
-    if not user:
-        raise HTTPException(400, "Invalid or already-used verification link.")
-    if user.verification_token_expires_at and user.verification_token_expires_at < datetime.utcnow():
-        raise HTTPException(400, "This verification link has expired. Please register again or request a new one.")
-
-    user.is_verified = True
-    user.verification_token = None
-    user.verification_token_expires_at = None
-    db.commit()
-    return {"message": "Email verified. You can now log in."}
-
-
-@router.post("/resend-verification")
-def resend_verification(payload: ResendVerificationRequest, db: Session = Depends(get_db)):
-    """
-    Closes a real dead end: the original verification email is
-    best-effort (_try_send_email swallows failures so registration
-    itself never blocks on an email outage), but that meant a genuinely
-    failed send left the user permanently stuck - can't log in
-    (unverified), can't re-register (email already taken), and there
-    was no way to trigger a second attempt. The expired-link error
-    message even already promised "or request a new one" - this is
-    that promise, finally implemented.
-
-    Same enumeration-safe generic response as forgot-password (README
-    S3.3's pattern) - never reveals whether the email is registered.
-    """
-    generic_response = {"message": "If that email is registered and not yet verified, a new link has been sent."}
-
-    user = db.query(User).filter(User.email == payload.email).first()
-    if not user or user.is_verified:
-        return generic_response
-
-    verification_token = generate_email_token()
-    user.verification_token = verification_token
-    user.verification_token_expires_at = datetime.utcnow() + timedelta(hours=VERIFICATION_TOKEN_TTL_HOURS)
-    db.commit()
-
-    verify_url = f"{settings.FRONTEND_URL}/verify-email/{verification_token}"
-    _try_send_email(
-        to_email=user.email,
-        subject="Verify your CareAI account",
-        html_content=(
-            f"<p>Hi {user.name},</p>"
-            f"<p>Confirm your email to activate your CareAI account:</p>"
-            f'<p><a href="{verify_url}">{verify_url}</a></p>'
-            f"<p>This link expires in {VERIFICATION_TOKEN_TTL_HOURS} hours.</p>"
-        ),
-    )
-    return generic_response
 
 
 @router.post("/login")
@@ -289,9 +218,6 @@ def login(payload: LoginRequest, request: Request, response: Response, db: Sessi
     if not user or not verify_password(payload.password, user.hashed_password):
         record_failed_login(rate_limit_key)
         raise HTTPException(401, "Invalid credentials")
-
-    if not user.is_verified:
-        raise HTTPException(403, "Please verify your email before logging in.")
 
     clear_login_attempts(rate_limit_key)
 
