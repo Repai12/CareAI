@@ -4,7 +4,7 @@ routers/safety_checkin.py
 OWNED BY MEMBER 3 (Faisal) - Module 3, Feature 6: Daily Safety Check-in
 (README S8.6). The patient taps "I'm okay" once a day; a scheduled job
 (see check_missed_checkins below, registered in services/scheduler.py)
-runs once daily and Twilio-alerts the top-priority emergency contact plus
+runs once daily and SMS-alerts the top-priority emergency contact plus
 notifies linked family if no check-in happened that day. This is a
 silence-triggered alert - the only one in the app that fires on the
 *absence* of an action rather than an action itself, which is why it
@@ -26,7 +26,7 @@ from app.models.safety_checkin import SafetyCheckin
 from app.models.emergency import EmergencyContact
 from app.models.notification import NotificationCategory
 from app.services.notification_service import create_notification
-from app.services.twilio_service import twilio_service
+from app.services.sms_service import sms_service
 from app.schemas import SafetyCheckinOut
 
 router = APIRouter(prefix="/checkin", tags=["safety checkin"])
@@ -114,7 +114,7 @@ def check_missed_checkins(db: Session) -> None:
         if contacts:
             top_contact = contacts[0]
             try:
-                twilio_service.send_sos_alert(
+                sms_service.send_sos_alert(
                     [top_contact.phone],
                     f"{patient.name} has not completed their daily CareAI safety check-in today.",
                 )

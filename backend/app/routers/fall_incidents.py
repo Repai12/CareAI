@@ -21,7 +21,7 @@ from app.models.fall_incident import FallIncident
 from app.models.emergency import EmergencyContact
 from app.models.notification import NotificationCategory
 from app.services.notification_service import create_notification
-from app.services.twilio_service import twilio_service
+from app.services.sms_service import sms_service
 from app.schemas import FallIncidentCreate, FallIncidentOut
 
 router = APIRouter(prefix="/fall-incidents", tags=["fall incidents"])
@@ -97,7 +97,7 @@ def log_fall_incident(
         )
         for phone in phone_numbers:
             try:
-                twilio_service.send_sos_alert([phone], sms_message)
+                sms_service.send_sos_alert([phone], sms_message)
                 delivered.append(phone)
             except Exception:
                 failed.append(phone)

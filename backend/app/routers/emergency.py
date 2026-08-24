@@ -12,7 +12,7 @@ than left to "should work":
   than a blanket "sent" that might be a lie.
 - The SOS event always writes to the shared notifications table
   (category=EMERGENCY) so it shows up in the Family Notification Center
-  and doctor's flagged list even if Twilio is down entirely.
+  and doctor's flagged list even if the SMS provider is down entirely.
 """
 
 import threading
@@ -30,7 +30,7 @@ from app.models.emergency import EmergencyContact
 from app.models.notification import NotificationCategory
 from app.services.notification_service import create_notification
 from app.schemas import EmergencyContactCreate, EmergencyContactUpdate, EmergencyContactOut
-from app.services.twilio_service import twilio_service
+from app.services.sms_service import sms_service
 
 router = APIRouter(
     prefix="/api/emergency",
@@ -114,7 +114,7 @@ def delete_emergency_contact(
 
 def _send_sms_batch(phone_numbers: list[str], message: str) -> tuple[list[str], list[str]]:
     """
-    Sends to each contact independently so one bad number/Twilio hiccup
+    Sends to each contact independently so one bad number/provider hiccup
     doesn't silently swallow the rest of the batch. Returns
     (delivered_numbers, failed_numbers) - used to build an honest status
     message rather than a blanket "sent".
@@ -122,7 +122,7 @@ def _send_sms_batch(phone_numbers: list[str], message: str) -> tuple[list[str], 
     delivered, failed = [], []
     for phone in phone_numbers:
         try:
-            twilio_service.send_sos_alert([phone], message)
+            sms_service.send_sos_alert([phone], message)
             delivered.append(phone)
         except Exception:
             failed.append(phone)
@@ -189,7 +189,7 @@ def trigger_sos(
         sms_message = f"EMERGENCY SOS ALERT! {current_user.name or current_user.email} needs immediate assistance!"
 
         # The event always logs and always notifies linked family/doctor,
-        # even with zero contacts or a total Twilio outage - the UI should
+        # even with zero contacts or a total SMS-provider outage - the UI should
         # already have nudged the patient to add contacts (README S6.3), but
         # a real emergency must never silently notify nobody just because
         # that nudge was ignored.

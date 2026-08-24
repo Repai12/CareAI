@@ -22,6 +22,11 @@ class Settings(BaseSettings):
     TWILIO_ACCOUNT_SID: str = ""
     TWILIO_AUTH_TOKEN: str = ""
     TWILIO_PHONE_NUMBER: str = ""
+    # SMS provider for emergency alerts (services/sms_service.py) - swapped
+    # off Twilio after account signup kept failing phone verification.
+    # Defaults to Textbelt's free shared key ("textbelt") so it works with
+    # zero setup; set to a paid Textbelt key for reliable, unshared sending.
+    TEXTBELT_API_KEY: str = "textbelt"
 
     model_config = SettingsConfigDict(
         env_file=".env",
