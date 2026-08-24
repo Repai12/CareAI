@@ -111,13 +111,23 @@ def _issue_refresh_token(db: Session, user_id) -> str:
     return raw_token
 
 
+# Local dev serves both frontend/backend off localhost (same site, just
+# different ports), where Lax + non-Secure works fine. Deployed, they're on
+# totally different domains (vercel.app vs onrender.com) - genuinely
+# cross-site, so the cookie needs SameSite=None + Secure or the browser
+# won't send it back on the /auth/refresh fetch call at all, silently
+# breaking session persistence. Derived from FRONTEND_URL's scheme (same
+# setting already driving CORS above) instead of a new env var.
+_IS_PRODUCTION = settings.FRONTEND_URL.startswith("https://")
+
+
 def _set_refresh_cookie(response: Response, raw_token: str) -> None:
     response.set_cookie(
         key=REFRESH_COOKIE_NAME,
         value=raw_token,
         httponly=True,
-        secure=False,  # set True once served over HTTPS in production
-        samesite="lax",
+        secure=_IS_PRODUCTION,
+        samesite="none" if _IS_PRODUCTION else "lax",
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         path="/auth",
     )

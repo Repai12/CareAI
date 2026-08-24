@@ -15,6 +15,7 @@ version, keeping every router that's actually implemented.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.config import settings
 from app.database import Base, engine
 
 # Import all models so SQLAlchemy registers them before create_all() runs.
@@ -53,12 +54,15 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# Local dev origins always allowed; the deployed frontend's real origin
+# comes from FRONTEND_URL (same setting already used for email links) so
+# deploying to Vercel needs no code change, just that one env var set on
+# the backend host.
+_allowed_origins = {"http://localhost:3000", "http://127.0.0.1:3000", settings.FRONTEND_URL}
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=list(_allowed_origins),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
