@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import {
   getEmergencyContacts,
   addEmergencyContact,
+  updateEmergencyContact,
   deleteEmergencyContact,
   getFallHistory,
   logFallIncident,
@@ -32,6 +33,8 @@ export default function SafetyPage() {
   const [contacts, setContacts] = useState<EmergencyContactOut[]>([]);
   const [contactForm, setContactForm] = useState({ name: "", phone: "", relationship: "", priority: 1 });
   const [showContactForm, setShowContactForm] = useState(false);
+  const [editingContactId, setEditingContactId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ name: "", phone: "", relationship: "", priority: 1 });
 
   const [falls, setFalls] = useState<FallIncidentOut[]>([]);
   const [fallForm, setFallForm] = useState({ severity: "minor", details: "" });
@@ -87,6 +90,25 @@ export default function SafetyPage() {
       setContacts((prev) => prev.filter((c) => c.id !== id));
     } catch (e: any) {
       setError(e.message || "Couldn't remove that contact.");
+    }
+  }
+
+  function handleStartEdit(c: EmergencyContactOut) {
+    setEditingContactId(c.id);
+    setEditForm({ name: c.name, phone: c.phone, relationship: c.relationship, priority: c.priority });
+  }
+
+  async function handleUpdateContact(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingContactId) return;
+    try {
+      const updated = await updateEmergencyContact(editingContactId, editForm);
+      setContacts((prev) =>
+        prev.map((c) => (c.id === updated.id ? updated : c)).sort((a, b) => a.priority - b.priority)
+      );
+      setEditingContactId(null);
+    } catch (e: any) {
+      setError(e.message || "Couldn't update that contact.");
     }
   }
 
@@ -186,19 +208,60 @@ export default function SafetyPage() {
 
           {contacts.length > 0 && (
             <ul className="space-y-2">
-              {contacts.map((c) => (
-                <li key={c.id} className="bg-white border border-sageLight rounded-xl p-4 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-ink text-sm">
-                      {c.name} <span className="text-ink/40 font-normal">· {c.relationship}</span>
-                    </p>
-                    <p className="text-xs text-ink/50 mt-0.5">{c.phone} · priority {c.priority}</p>
-                  </div>
-                  <button onClick={() => handleDeleteContact(c.id)} className="text-xs text-alert hover:underline shrink-0">
-                    Remove
-                  </button>
-                </li>
-              ))}
+              {contacts.map((c) =>
+                editingContactId === c.id ? (
+                  <li key={c.id} className="bg-white border border-sageLight rounded-xl p-4">
+                    <form onSubmit={handleUpdateContact} className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <input required placeholder="Name" value={editForm.name}
+                          onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                          className="border border-sageLight rounded-lg px-3 py-2 text-sm" />
+                        <input required placeholder="Phone (e.g. +15551234567)" value={editForm.phone}
+                          onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                          className="border border-sageLight rounded-lg px-3 py-2 text-sm" />
+                        <input required placeholder="Relationship (e.g. Daughter)" value={editForm.relationship}
+                          onChange={(e) => setEditForm({ ...editForm, relationship: e.target.value })}
+                          className="border border-sageLight rounded-lg px-3 py-2 text-sm" />
+                        <div>
+                          <label className="text-xs text-ink/50">Priority (1 = contacted first)</label>
+                          <input type="number" min={1} value={editForm.priority}
+                            onChange={(e) => setEditForm({ ...editForm, priority: Number(e.target.value) })}
+                            className="w-full border border-sageLight rounded-lg px-3 py-2 text-sm" />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button type="submit" className="text-xs font-medium bg-sage text-white px-4 py-2 rounded-lg hover:bg-sage/90">
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingContactId(null)}
+                          className="text-xs font-medium text-ink/60 border border-sageLight px-4 py-2 rounded-lg hover:bg-paper"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </li>
+                ) : (
+                  <li key={c.id} className="bg-white border border-sageLight rounded-xl p-4 flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-ink text-sm">
+                        {c.name} <span className="text-ink/40 font-normal">· {c.relationship}</span>
+                      </p>
+                      <p className="text-xs text-ink/50 mt-0.5">{c.phone} · priority {c.priority}</p>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <button onClick={() => handleStartEdit(c)} className="text-xs text-sage hover:underline">
+                        Edit
+                      </button>
+                      <button onClick={() => handleDeleteContact(c.id)} className="text-xs text-alert hover:underline">
+                        Remove
+                      </button>
+                    </div>
+                  </li>
+                )
+              )}
             </ul>
           )}
         </section>
