@@ -7,8 +7,8 @@ Summary Email.
 Workflow: aggregates the last 30 days of a patient's logs (vitals,
 medications, appointments - symptoms/diet logs will fold in once
 Member 1 builds those tables), sends it to Gemini with a clinical
-summary prompt, and hands the result to email_service.py (Resend) to
-actually deliver it.
+summary prompt, and hands the result to email_service.py (Gmail SMTP)
+to actually deliver it.
 
 Corner cases handled (per spec):
 - Gemini timeout (>15s): falls back to emailing the raw formatted logs
@@ -135,7 +135,7 @@ def generate_doctor_ai_summary(db: Session, patient_id, requesting_doctor: User)
 
     summary_html: str
     try:
-        model = genai.GenerativeModel("gemini-flash-latest")
+        model = genai.GenerativeModel("gemini-3.5-flash")
         prompt = _build_gemini_prompt(patient, logs)
         response = model.generate_content(
             prompt,
