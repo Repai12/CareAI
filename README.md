@@ -8,7 +8,7 @@
 CareAI is a full-stack web application built for **CSE471: System Analysis and Design**. It addresses a real problem: families living apart from elderly relatives often have no visibility into their day-to-day health, and doctors only see patients during scheduled visits. CareAI bridges that gap with shared, role-based access to health data, real-time communication, and AI-assisted tools.
  
 The platform supports three roles:
-- 👵 **Elderly Patient** — logs medication, mood, meals, and activity; chats with an AI companion; triggers SOS in emergencies
+- 👵 **Elderly Patient** — logs medication, mood, meals, and activity; triggers SOS in emergencies
 - 👨‍👩‍👧 **Family Member** — monitors compliance and wellbeing, receives emergency alerts, communicates via family chat
 - 🩺 **Doctor** — manages medical records, uses AI to analyze reports, answers patient-history questions
 ## Features
@@ -17,15 +17,15 @@ The platform supports three roles:
 |---|---|
 | **Module 1** | Activity tracking with trend dashboards, medical visit & records management, mood tracking, doctor diagnosis entries |
 | **Module 2** | Medication scheduler with compliance tracking, nutrition planner, wellness recommendation engine, AI medical report analyzer |
-| **Module 3** | Severity-based incident/fall alerting, AI weekly health summaries, AI prescription summarizer, family chat, dual-persona AI companion, emergency SOS with escalation, AI patient history Q&A, automated daily digest |
+| **Module 3** | Severity-based incident/fall alerting, AI weekly health summaries, AI prescription summarizer, family chat, emergency SOS with escalation, AI patient history Q&A, automated daily digest |
  
 ## Tech Stack
  
 - **Backend:** FastAPI 
 - **Frontend:** Next.js
 - **Database:** PostgreSQL
-- **AI:** Groq API (Llama 3.3 70B) — used for summaries, reflections, AI companion chat, and Q&A
-- **Notifications:** Twilio (SMS-based SOS alerts)
+- **AI:** Groq API (Llama 3.3 70B) — used for summaries, reflections, and Q&A
+- **Notifications:** Textbelt (SMS-based SOS alerts)
 - **Real-time:** WebSockets (family/doctor chat)
 - **Auth:** JWT (python-jose) + bcrypt
 - **Deployment:** Vercel (frontend) · Render (backend + PostgreSQL)
@@ -78,7 +78,7 @@ Copy the example env file and fill in real values:
 cp .env.example .env
 ```
 
-At minimum, set `DATABASE_URL` to the team's shared Neon connection string (ask a teammate, or see "Working with a shared database" below). `RESEND_API_KEY`, `GEMINI_API_KEY`, `GROQ_API_KEY`, and the `TWILIO_*` variables can be left blank locally — the features that need them will fail gracefully and log a warning instead of crashing, but you'll want real keys to actually test those features.
+At minimum, set `DATABASE_URL` to the team's shared Neon connection string (ask a teammate, or see "Working with a shared database" below). `RESEND_API_KEY`, `GEMINI_API_KEY`, and `GROQ_API_KEY` can be left blank locally — the features that need them will fail gracefully and log a warning instead of crashing, but you'll want real keys to actually test those features. `TEXTBELT_API_KEY` defaults to Textbelt's free shared key (`textbelt`) and works with zero setup.
 
 Apply the database schema:
 
