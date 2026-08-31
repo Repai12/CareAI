@@ -13,6 +13,15 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:3000"
     RESEND_API_KEY: str = ""
     RESEND_FROM_EMAIL: str = "onboarding@resend.dev"
+    # Email delivery (services/email_service.py) - swapped off Resend after
+    # its unverified-domain sandbox mode turned out to only deliver to the
+    # account's own signup address, same shape of problem as Twilio. Gmail
+    # SMTP has no such restriction - a real Gmail account can email anyone.
+    # GMAIL_APP_PASSWORD is a 16-character App Password (Google Account ->
+    # Security -> App Passwords, requires 2-Step Verification on first),
+    # not the account's real login password.
+    GMAIL_ADDRESS: str = ""
+    GMAIL_APP_PASSWORD: str = ""
     # Gemini API
     GEMINI_API_KEY: str = ""
     # Member 3 - Daily Safety Check-in
